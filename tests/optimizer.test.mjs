@@ -77,7 +77,7 @@ Required: monitoring and auditing experience.
     fileFormat: 'text',
     importedAt: '2026-10-06T00:00:00.000Z',
     text: '',
-    fileText: 'Operations Manager responsibilities include conducting internal audits against documented compliance procedures and coordinating corrective follow-up with regional teams.'
+    fileText: 'Operations Manager responsibilities include monitoring and auditing regulated workflows against documented compliance procedures and coordinating corrective follow-up with regional teams.'
   }];
 
   const draft = buildOptimizedDraft(resume);
