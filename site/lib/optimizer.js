@@ -20,6 +20,92 @@ function inferTargetTitle(resume) {
   return candidate ?? 'Target role';
 }
 
+function cleanSourceSentence(value) {
+  return String(value ?? '')
+    .replace(/^[\s•▪◦*-]+/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function careerSourceRecords(resume) {
+  return (resume.careerSources ?? [])
+    .map((source, index) => {
+      const text = [source.fileText, source.text].filter((value) => String(value ?? '').trim()).join('\n');
+      const sentences = text
+        .split(/(?:\n+|(?<=[.!?;])\s+)/)
+        .map(cleanSourceSentence)
+        .filter((value) => value.length >= 18 && value.length <= 320);
+      return {
+        index,
+        label: source.label?.trim() || source.fileName?.trim() || `Job description ${index + 1}`,
+        fileName: source.fileName?.trim() || '',
+        text,
+        sentences
+      };
+    })
+    .filter((source) => source.text.trim());
+}
+
+function careerContextForTerm(sources, term, limit = 2) {
+  const results = [];
+  for (const source of sources) {
+    for (const sentence of source.sentences) {
+      if (!textSupportsTerm(sentence, term)) continue;
+      results.push({ label: source.label, text: sentence, term });
+      if (results.length >= limit) return results;
+    }
+  }
+  return results;
+}
+
+function careerContextForRequirement(sources, requirement) {
+  const concepts = extractKeywords(requirement, 6);
+  const seen = new Set();
+  const matches = [];
+  for (const concept of concepts) {
+    for (const item of careerContextForTerm(sources, concept.term, 2)) {
+      const key = `${item.label}\n${item.text}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      matches.push(item);
+      if (matches.length >= 2) return matches;
+    }
+  }
+  return matches;
+}
+
+function roleSourceSuggestions(role, sources, targetTerms) {
+  const title = role.title?.trim().toLowerCase();
+  const company = role.company?.trim().toLowerCase();
+  const likely = sources.filter((source) => {
+    const haystack = `${source.label}\n${source.text.slice(0, 1200)}`.toLowerCase();
+    return (title && title.length >= 4 && haystack.includes(title)) || (company && company.length >= 4 && haystack.includes(company));
+  });
+  const pool = likely.length ? likely : [];
+  const suggestions = [];
+  for (const source of pool) {
+    for (const sentence of source.sentences) {
+      const matched = targetTerms.filter((item) => textSupportsTerm(sentence, item.term)).slice(0, 3);
+      if (!matched.length) continue;
+      suggestions.push({
+        label: source.label,
+        text: sentence,
+        terms: matched.map((item) => item.term)
+      });
+      if (suggestions.length >= 3) return suggestions;
+    }
+  }
+  return suggestions;
+}
+
+function sourceAwareEvidencePattern(term, sources) {
+  const [context] = careerContextForTerm(sources, term, 1);
+  if (context) {
+    return `For ${term}, the supplied role description “${context.label}” references: “${context.text}” Convert that responsibility into a resume accomplishment only if personally performed, adding ownership, scale, and a verifiable result.`;
+  }
+  return `Show direct evidence of ${term} by naming the relevant responsibility, tool or governing standard, the scope of your work, and a verifiable outcome.`;
+}
+
 function evidenceEntries(resume) {
   const entries = [];
   const add = (kind, label, text) => {
@@ -68,22 +154,27 @@ function requirementStatus(resume, entries, requirement) {
   return { status: 'gap', keyTerms, supported };
 }
 
-function coachingExample(text) {
+function coachingExample(text, sourceContext = []) {
+  if (sourceContext.length) {
+    const context = sourceContext[0];
+    return `Your supporting job-description source “${context.label}” mentions: “${context.text}” If you personally performed this responsibility, turn it into an accomplishment that states your ownership, scope, and outcome. Do not copy the duty statement as proof of an achievement.`;
+  }
+
   const value = text.toLowerCase();
   if (/capa|corrective|preventive/.test(value)) {
-    return 'If accurate, add evidence such as: “Tracked corrective and preventive actions from finding through implementation and effectiveness verification across [scope].”';
+    return 'If accurate, describe a corrective/preventive action you personally owned: what finding or risk triggered it, what action you coordinated, the affected scope, and how effectiveness or closure was verified.';
   }
   if (/audit|auditing|monitor/.test(value)) {
-    return 'If accurate, add evidence such as: “Audited/monitored [process, study, or program] against [standard], documented findings, and followed corrective actions through closure.”';
+    return 'If accurate, identify what you audited or monitored, the governing requirement or review criteria, the size/frequency of the review, the findings, and what happened after escalation or corrective action.';
   }
   if (/gcp|ich|clinical research|clinical trial/.test(value)) {
-    return 'If accurate, specify direct clinical-research, GCP/ICH, protocol, informed-consent, or trial-monitoring experience and the scope in which it was applied.';
+    return 'If accurate, specify the clinical-research activity you personally performed, the GCP/ICH or protocol requirement involved, and the study, record, or monitoring scope.';
   }
   if (/regulatory|compliance|federal regulation|policy/.test(value)) {
-    return 'If accurate, identify the governing standard or regulation, what you reviewed for compliance, the scale, and the result of the review.';
+    return 'If accurate, identify the governing standard or regulation, what you personally reviewed for compliance, the organizational scope, and the resulting action or outcome.';
   }
   if (/data|reporting|documentation/.test(value)) {
-    return 'If accurate, add a bullet showing what data or documentation you reviewed, how accuracy/timeliness was verified, and what action followed.';
+    return 'If accurate, identify the data or documentation you personally reviewed, the system or method used, the volume/frequency, how accuracy or timeliness was verified, and what decision or action followed.';
   }
   if (/certif|socra|acrp/.test(value)) {
     return 'List the exact credential and issuing organization only if held. If it is preferred rather than required, leave it as a visible gap instead of implying certification.';
@@ -92,11 +183,10 @@ function coachingExample(text) {
     return 'Clarify the exact education and length/scope of equivalent experience. Do not convert experience into a degree or invent a duration.';
   }
   if (/communication|presentation|interpersonal|relationship/.test(value)) {
-    return 'If accurate, show the audiences involved, the communication responsibility, and a result—for example audit coordination, training, escalation, or cross-functional resolution.';
+    return 'If accurate, identify the audiences involved, what you communicated or coordinated, the frequency or scope, and the result—for example training completion, issue resolution, audit coordination, or escalation.';
   }
-  return 'If this requirement is genuinely part of your background, add a concrete accomplishment showing the action, scope, standard/tool, and result. Otherwise leave it identified as a gap.';
+  return 'If this requirement is genuinely part of your background, add a concrete accomplishment showing your action, the work context, the relevant tool/standard, the scope, and the result. Otherwise leave it identified as a gap.';
 }
-
 function bulletRelevance(bullet, targetTerms) {
   return targetTerms.reduce((score, item) => score + (textSupportsTerm(bullet, item.term) ? item.weight : 0), 0);
 }
@@ -127,6 +217,7 @@ export function buildOptimizedDraft(resume) {
   const targetTerms = resolveTargetConcepts(resume.jobDescription, resume.targetConceptOverrides, 28);
   const requirements = extractRequirementSignals(resume.jobDescription, 24);
   const entries = evidenceEntries(resume);
+  const careerSources = careerSourceRecords(resume);
   const resumeText = resumeToPlainText(resume);
 
   const supportedTerms = targetTerms.filter((item) => textSupportsTerm(resumeText, item.term));
@@ -135,13 +226,15 @@ export function buildOptimizedDraft(resume) {
   const requirementReview = requirements.map((requirement) => {
     const review = requirementStatus(resume, entries, requirement);
     const evidence = review.supported.flatMap((item) => evidenceForTerm(entries, item.term)).slice(0, 3);
+    const sourceContext = careerContextForRequirement(careerSources, requirement.text);
     return {
       ...requirement,
       status: review.status,
       evidence,
+      sourceContext,
       comment: review.status === 'supported'
-        ? 'Evidence was found in the imported/entered resume. Verify that the wording and level of responsibility are accurate before using it.'
-        : coachingExample(requirement.text)
+        ? 'Evidence was found in the imported/entered resume. Supporting job descriptions may add terminology or role context, but the resume evidence remains the basis for this status.'
+        : coachingExample(requirement.text, sourceContext)
     };
   });
 
@@ -162,15 +255,14 @@ export function buildOptimizedDraft(resume) {
 
   const experiences = resume.experiences.map((role) => ({
     ...role,
+    sourceSuggestions: roleSourceSuggestions(role, careerSources, targetTerms),
     bullets: role.bullets
       .map((bullet, index) => ({ bullet, index, score: bulletRelevance(bullet, targetTerms) }))
       .filter((item) => item.bullet?.trim())
       .sort((a, b) => b.score - a.score || a.index - b.index)
   }));
 
-  const idealBullets = targetTerms.slice(0, 5).map((item) =>
-    `Demonstrated ${item.term} across [relevant scope], applying [standard/tool/process] and documenting a measurable result or risk/quality outcome.`
-  );
+  const idealBullets = targetTerms.slice(0, 5).map((item) => sourceAwareEvidencePattern(item.term, careerSources));
 
   const unsupportedRequired = requirementReview.filter((item) => item.type === 'required' && item.status !== 'supported');
   const unsupportedPreferred = requirementReview.filter((item) => item.type === 'preferred' && item.status !== 'supported');
@@ -196,6 +288,14 @@ export function buildOptimizedDraft(resume) {
       experiences,
       education: resume.education,
       certifications: resume.certifications
+    },
+    careerContext: {
+      sourceCount: careerSources.length,
+      alignedSources: careerSources.map((source) => ({
+        label: source.label,
+        fileName: source.fileName,
+        matchedTerms: targetTerms.filter((item) => textSupportsTerm(source.text, item.term)).slice(0, 8).map((item) => item.term)
+      })).filter((source) => source.matchedTerms.length)
     },
     gaps: {
       required: unsupportedRequired,
