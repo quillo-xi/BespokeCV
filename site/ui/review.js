@@ -34,18 +34,18 @@ function renderReadinessRequirement(item) {
 }
 
 function renderEvidenceExample(item) {
-  const criteria = (item.criteria ?? []).map((label) => `<span class="evidence-criteria">${escapeHtml(label)}</span>`).join('');
+  const criteria = (item.criteria ?? []).slice(0, 5).map((label) => `<span class="evidence-criteria">${escapeHtml(label)}</span>`).join('');
   const changed = item.after && item.after !== item.before;
   return `<article class="evidence-example-card ${escapeHtml(item.kind)}">
     <div class="evidence-example-head">
       <div><span class="eyebrow">${escapeHtml(item.roleLabel)}</span><h3>${escapeHtml(item.title)}</h3></div>
       ${criteria ? `<div class="evidence-criteria-wrap">${criteria}</div>` : ''}
     </div>
-    <div class="evidence-example-body">
+    <div class="evidence-example-body ${changed ? '' : 'single'}">
       <div><strong>From the resume</strong><p>${escapeHtml(item.before)}</p></div>
-      ${changed ? `<div class="evidence-example-after"><strong>Stronger version</strong><p>${escapeHtml(item.after)}</p></div>` : ''}
+      ${changed ? `<div class="evidence-example-after"><strong>Suggested rewrite</strong><p>${escapeHtml(item.after)}</p></div>` : ''}
     </div>
-    ${item.prompt ? `<div class="evidence-measure-prompt"><strong>Best next detail to add</strong><p>${escapeHtml(item.prompt)}</p></div>` : ''}
+    ${item.questions?.length ? `<div class="evidence-measure-prompt"><strong>Best next details to consider</strong><ul>${item.questions.map((question) => `<li>${escapeHtml(question)}</li>`).join('')}</ul></div>` : ''}
     ${item.note ? `<p class="evidence-example-note">${escapeHtml(item.note)}</p>` : ''}
   </article>`;
 }
@@ -86,7 +86,7 @@ export function renderReviewPanel(resume, panel, { editConcepts = false } = {}) 
   const coaching = resume.jobDescription.trim() ? buildCoachingPlan(resume) : null;
   const cards = [
     ['Parse integrity', analysis.parseScore, 'Core information and standard resume structure.'],
-    ['Evidence strength', analysis.evidenceScore, 'Action-oriented, quantified, concise accomplishments.'],
+    ['Evidence & context', analysis.evidenceScore, 'Clear actions supported by scope, outcomes, standards, tools, ownership, complexity, or other useful context.'],
     ['Target-language overlap', resume.jobDescription.trim() ? analysis.targetScore : '—', 'Wording overlap with high-signal job language; qualification coverage is reviewed separately below.'],
     ['Human scan', analysis.scanScore, 'Headline, summary, skills focus, and skimmability.']
   ];
@@ -126,13 +126,25 @@ export function renderReviewPanel(resume, panel, { editConcepts = false } = {}) 
     </section>
     <section class="form-section evidence-diagnostics-section">
       <div class="section-title-row"><h2>Evidence diagnostics</h2><p>Context beats keyword stuffing</p></div>
-      <p class="help"><strong>${analysis.metricCount}/${analysis.bulletCount || 0}</strong> bullets contain a measurable signal; <strong>${analysis.actionCount}/${analysis.bulletCount || 0}</strong> start with a recognized action verb. These are coaching heuristics, not hard hiring rules.</p>
+      <p class="help">Strong bullets do more than start with an action verb or contain a number. They help the reader understand capability through useful context such as scope, outcome, standards, systems, ownership, complexity, audience, or frequency.</p>
+      <div class="evidence-signal-grid">
+        <article><strong>${analysis.contextCount}/${analysis.bulletCount || 0}</strong><span>show meaningful context or evidence</span></article>
+        <article><strong>${analysis.outcomeCount}/${analysis.bulletCount || 0}</strong><span>show a result or outcome</span></article>
+        <article><strong>${analysis.actionCount}/${analysis.bulletCount || 0}</strong><span>use a direct action opening</span></article>
+        <article><strong>${analysis.metricCount}/${analysis.bulletCount || 0}</strong><span>show scale or frequency</span></article>
+      </div>
+      <p class="help">Numbers are useful when they describe real scale, frequency, money, time, volume, or results. A bullet can still be strong without a number when it clearly shows specialized work, ownership, standards, tools, risk, breadth, or impact.</p>
       ${analysis.evidenceExamples?.length ? `
         <div class="evidence-example-intro">
           <strong>Examples from this resume</strong>
-          <span>These use the resume's own wording and details to show what the diagnostic is looking for. When a useful number is not already present, BespokeCV asks what to add instead of supplying one.</span>
+          <span>These examples preserve the information already present. When the bullet needs more substance, BespokeCV asks for the most useful missing detail instead of forcing a metric.</span>
         </div>
         <div class="evidence-example-list">${analysis.evidenceExamples.map(renderEvidenceExample).join('')}</div>
       ` : '<p class="help">Add accomplishment bullets to see resume-specific examples here.</p>'}
-    </section>`;
+    </section>
+    ${analysis.consistencyIssues?.length ? `
+      <section class="form-section">
+        <div class="section-title-row"><h2>Consistency & polish</h2><p>Dates, tense, repetition, and duplicate content</p></div>
+        <div class="recommendations">${analysis.consistencyIssues.map((item) => `<article class="recommendation ${escapeHtml(item.severity)}"><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.detail)}</p></article>`).join('')}</div>
+      </section>` : ''}`;
 }
