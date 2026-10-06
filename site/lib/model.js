@@ -1,7 +1,7 @@
-export const APP_VERSION = '0.3.1';
+export const APP_VERSION = '0.3.2';
 
 export const createBlankResume = () => ({
-  schemaVersion: 2,
+  schemaVersion: 3,
   profile: {
     fullName: '',
     cityState: '',
@@ -20,6 +20,7 @@ export const createBlankResume = () => ({
   jobSourceUrl: '',
   jobSourceTitle: '',
   jobSourceCompany: '',
+  targetConceptOverrides: { added: [], excluded: [] },
   importedSource: { fileName: '', format: '', importedAt: '', text: '' }
 });
 
@@ -70,6 +71,10 @@ export function normalizeResume(input) {
     jobSourceUrl: typeof input.jobSourceUrl === 'string' ? input.jobSourceUrl : '',
     jobSourceTitle: typeof input.jobSourceTitle === 'string' ? input.jobSourceTitle : '',
     jobSourceCompany: typeof input.jobSourceCompany === 'string' ? input.jobSourceCompany : '',
+    targetConceptOverrides: {
+      added: Array.isArray(input.targetConceptOverrides?.added) ? input.targetConceptOverrides.added.map(String) : [],
+      excluded: Array.isArray(input.targetConceptOverrides?.excluded) ? input.targetConceptOverrides.excluded.map(String) : []
+    },
     importedSource: { ...base.importedSource, ...(input.importedSource ?? {}) }
   };
 }
