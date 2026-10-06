@@ -2,6 +2,16 @@ import { analyzeResume } from '../lib/analyzer.js';
 import { validateJobUrl } from '../lib/job-source.js';
 import { escapeHtml, field, scoreLabel } from './shared.js';
 
+function renderConceptChip(item, { missing = false, editable = false } = {}) {
+  const classes = ['keyword', 'concept-chip', missing ? 'missing' : '', item.source === 'manual' ? 'manual' : ''].filter(Boolean).join(' ');
+  const remove = editable
+    ? `<button class="concept-remove" type="button" data-action="remove-target-concept" data-term="${escapeHtml(item.term)}" aria-label="Remove ${escapeHtml(item.term)} from target concepts">×</button>`
+    : '';
+  return `<span class="${classes}" title="${item.source === 'manual' ? 'User-added concept' : 'Detected from job posting'}"><span>${escapeHtml(item.term)}</span>${remove}</span>`;
+}
+
+
+
 export function renderTargetPanel(resume, panel) {
   const validation = resume.jobSourceUrl ? validateJobUrl(resume.jobSourceUrl) : null;
   const sourceLink = validation?.ok ? `<a class="safe-link" href="${escapeHtml(validation.url)}" target="_blank" rel="noopener noreferrer">Open source listing ↗</a>` : '';
@@ -33,7 +43,7 @@ export function renderTargetPanel(resume, panel) {
     </section>`;
 }
 
-export function renderReviewPanel(resume, panel) {
+export function renderReviewPanel(resume, panel, { editConcepts = false } = {}) {
   const analysis = analyzeResume(resume);
   const cards = [
     ['Parse integrity', analysis.parseScore, 'Core information and standard resume structure.'],
@@ -46,7 +56,26 @@ export function renderReviewPanel(resume, panel) {
     <div class="score-hero"><div class="score-ring" style="--score:${analysis.overall}"><span>${analysis.overall}</span></div><div class="score-copy"><h2>${scoreLabel(analysis.overall)}</h2><p>The overall readiness score is a weighted coaching signal. Treat the recommendations and missing evidence—not the number itself—as the useful output.</p></div></div>
     <div class="score-grid">${cards.map(([label,value,detail]) => `<div class="score-card"><div class="score-card-top"><span>${label}</span><span>${value}${value === '—' ? '' : '/100'}</span></div><small>${detail}</small>${value === '—' ? '' : `<div class="meter"><span style="width:${value}%"></span></div>`}</div>`).join('')}</div>
     <section class="form-section"><div class="section-title-row"><h2>Priority recommendations</h2><p>${analysis.bulletCount} accomplishment bullets reviewed</p></div><div class="recommendations">${analysis.recommendations.map((item)=>`<article class="recommendation ${item.severity}"><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.detail)}</p></article>`).join('')}</div></section>
-    <section class="form-section"><div class="section-title-row"><h2>Target-language coverage</h2><p>Concept-level matching</p></div>${resume.jobDescription.trim() ? `<p class="help">Matched concepts</p><div class="keyword-wrap">${analysis.matchedKeywords.slice(0,16).map((item)=>`<span class="keyword">${escapeHtml(item.term)}</span>`).join('') || '<span class="help">No high-signal matches yet.</span>'}</div><p class="help">Unrepresented concepts to investigate</p><div class="keyword-wrap">${analysis.missingKeywords.slice(0,16).map((item)=>`<span class="keyword missing">${escapeHtml(item.term)}</span>`).join('') || '<span class="help">No obvious keyword gaps found.</span>'}</div>` : '<p class="help">Add a target job description to activate this section.</p>'}</section>
+    <section class="form-section target-concept-section">
+      <div class="section-title-row">
+        <div><h2>Target-language coverage</h2><p>Concept-level matching</p></div>
+        ${resume.jobDescription.trim() ? `<button class="concept-edit-toggle ${editConcepts ? 'active' : ''}" type="button" data-action="toggle-concept-edit" aria-pressed="${String(editConcepts)}">${editConcepts ? 'Done editing' : 'Edit concepts'}</button>` : ''}
+      </div>
+      ${resume.jobDescription.trim() ? `
+        ${editConcepts ? `<div class="concept-editor" role="region" aria-label="Edit target concepts">
+          <form class="concept-add-form" data-form="add-target-concept">
+            <label class="field"><span>Add your own target concept</span><input name="targetConcept" type="text" maxlength="80" placeholder="e.g., risk management" autocomplete="off"></label>
+            <button class="btn primary" type="submit">Add concept</button>
+            ${(resume.targetConceptOverrides?.added?.length || resume.targetConceptOverrides?.excluded?.length) ? '<button class="btn" type="button" data-action="reset-target-concepts">Reset curation</button>' : ''}
+          </form>
+          <p class="help">Remove concepts that are not useful for this application or add concepts the posting analysis missed. Changes are saved with this resume and also affect the Optimized Draft.</p>
+        </div>` : ''}
+        <p class="help">Matched concepts</p>
+        <div class="keyword-wrap">${analysis.matchedKeywords.slice(0,16).map((item)=>renderConceptChip(item,{ editable: editConcepts })).join('') || '<span class="help">No high-signal matches yet.</span>'}</div>
+        <p class="help">Unrepresented concepts to investigate</p>
+        <div class="keyword-wrap">${analysis.missingKeywords.slice(0,16).map((item)=>renderConceptChip(item,{ missing: true, editable: editConcepts })).join('') || '<span class="help">No obvious keyword gaps found.</span>'}</div>
+      ` : '<p class="help">Add a target job description to activate this section.</p>'}
+    </section>
     <section class="form-section"><div class="section-title-row"><h2>Qualification signals</h2><p>Extracted from requirement-like sentences</p></div>${analysis.requirements.length ? `<ul class="requirement-list">${analysis.requirements.map((item)=>`<li>${escapeHtml(item)}</li>`).join('')}</ul>` : '<p class="help">No explicit qualification statements detected yet.</p>'}</section>
     <section class="form-section"><div class="section-title-row"><h2>Evidence diagnostics</h2><p>Context beats keyword stuffing</p></div><p class="help"><strong>${analysis.metricCount}/${analysis.bulletCount || 0}</strong> bullets contain a measurable signal; <strong>${analysis.actionCount}/${analysis.bulletCount || 0}</strong> start with a recognized action verb. These are coaching heuristics, not hard hiring rules.</p></section>`;
 }
