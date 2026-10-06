@@ -1,6 +1,6 @@
-import { APP_VERSION, createBlankResume, createEducation, createExperience, normalizeResume } from './lib/model.js';
+import { APP_VERSION, createBlankResume, createCareerSource, createEducation, createExperience, normalizeResume } from './lib/model.js';
 import { copyPlainText, downloadBackup, downloadDocx, downloadTxt } from './lib/exporters.js';
-import { importResumeFile, parseResumeText } from './lib/importers.js';
+import { importResumeFile, importSupportingDocument, parseResumeText } from './lib/importers.js';
 import { fetchJobPosting } from './lib/job-source.js';
 import { renderResumeEditor } from './ui/editor.js';
 import { renderTargetPanel, renderReviewPanel } from './ui/review.js';
@@ -19,6 +19,7 @@ const toast = $('#toast');
 let deferredInstallPrompt = null;
 let saveTimer = null;
 let targetConceptEditMode = false;
+let resumeContentTab = 'resume';
 let resume = loadResume();
 
 function loadResume() {
@@ -52,7 +53,7 @@ function renderReview() {
 }
 
 function renderAll({ editor = true } = {}) {
-  if (editor) renderResumeEditor(resume, resumePanel);
+  if (editor) renderResumeEditor(resume, resumePanel, { activeTab: resumeContentTab });
   renderTargetPanel(resume, targetPanel);
   renderOptimizedPanel(resume, optimizedPanel);
   renderReview();
@@ -76,6 +77,13 @@ function handleEditorClick(event) {
   const button = event.target.closest('[data-action]');
   if (!button) return;
   const action = button.dataset.action;
+
+  if (button.dataset.resumeSubtab) {
+    resumeContentTab = button.dataset.resumeSubtab;
+    renderResumeEditor(resume, resumePanel, { activeTab: resumeContentTab });
+    return;
+  }
+
   if (action === 'upload-resume') { $('#importFile').click(); return; }
   if (action === 'import-pasted-resume') {
     const text = $('#resumePasteText')?.value?.trim();
@@ -89,6 +97,16 @@ function handleEditorClick(event) {
   if (action === 'remove-bullet') resume.experiences[Number(button.dataset.role)].bullets.splice(Number(button.dataset.bullet), 1);
   if (action === 'add-education') resume.education.push(createEducation());
   if (action === 'remove-education') resume.education.splice(Number(button.dataset.index), 1);
+  if (action === 'add-career-source') resume.careerSources.push(createCareerSource());
+  if (action === 'remove-career-source' && resume.careerSources.length > 1) resume.careerSources.splice(Number(button.dataset.index), 1);
+  if (action === 'clear-career-text') resume.careerSources[Number(button.dataset.index)].text = '';
+  if (action === 'clear-career-file') {
+    const source = resume.careerSources[Number(button.dataset.index)];
+    source.fileName = '';
+    source.fileFormat = '';
+    source.fileText = '';
+    source.importedAt = '';
+  }
   scheduleSave();
   renderAll();
 }
@@ -198,6 +216,27 @@ function handleReviewSubmit(event) {
   showToast(`${term} added to target concepts`);
 }
 
+async function importCareerSourceFile(file, index) {
+  const source = resume.careerSources[index];
+  if (!source) return;
+  const currentLabel = saveStatus.textContent;
+  saveStatus.textContent = `Reading ${file.name} locally…`;
+  try {
+    const result = await importSupportingDocument(file);
+    source.fileName = result.fileName;
+    source.fileFormat = result.format;
+    source.fileText = result.text;
+    source.importedAt = result.importedAt;
+    scheduleSave();
+    renderResumeEditor(resume, resumePanel, { activeTab: resumeContentTab });
+    renderOptimizedPanel(resume, optimizedPanel);
+    showToast(`${file.name} added as career evidence`);
+  } catch (error) {
+    saveStatus.textContent = currentLabel;
+    showToast(error?.message || 'Could not read that supporting document');
+  }
+}
+
 function switchMode(mode) {
   for (const button of document.querySelectorAll('.mode-tab[data-mode]')) {
     const active = button.dataset.mode === mode;
@@ -226,6 +265,7 @@ function newResume() {
   if (!confirm('Start a new resume? Export a BespokeCV backup first if you want to keep the current version.')) return;
   resume = createBlankResume();
   targetConceptEditMode = false;
+  resumeContentTab = 'resume';
   localStorage.removeItem(STORAGE_KEY);
   renderAll();
   scheduleSave();
@@ -241,6 +281,7 @@ function preserveTargetFields(targetResume) {
     added: [...(resume.targetConceptOverrides?.added ?? [])],
     excluded: [...(resume.targetConceptOverrides?.excluded ?? [])]
   };
+  targetResume.careerSources = (resume.careerSources ?? []).map((source) => ({ ...source }));
   return targetResume;
 }
 
@@ -265,7 +306,16 @@ async function importFile(file) {
 
 function bindEvents() {
   resumePanel.addEventListener('input', handleInput);
-  resumePanel.addEventListener('change', handleInput);
+  resumePanel.addEventListener('change', (event) => {
+    const fileInput = event.target.closest('[data-career-file-index]');
+    if (fileInput) {
+      const [file] = fileInput.files;
+      if (file) importCareerSourceFile(file, Number(fileInput.dataset.careerFileIndex));
+      fileInput.value = '';
+      return;
+    }
+    handleInput(event);
+  });
   targetPanel.addEventListener('input', handleInput);
   resumePanel.addEventListener('click', handleEditorClick);
   targetPanel.addEventListener('click', handleTargetClick);
