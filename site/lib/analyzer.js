@@ -4,7 +4,7 @@ const STOPWORDS = new Set(`a an and are as at be been being but by can could did
 
 const NOISE_TERMS = new Set(`employment misconduct applicant applicants employer employers opportunity equal consideration conditions authorization sponsorship e-verify race color religion sex sexual gender identity national origin disability veteran accommodation anti-discrimination community workforce salary compensation benefits insurance retirement perk perks category categories application applications university uc uci activities activity subject subjects person persons`.split(/\s+/));
 
-const AMBIGUOUS_SINGLE = new Set(`quality assurance data research clinical regulatory monitoring reporting compliance review software computer trial trials action actions process processes documentation submission findings subject`.split(/\s+/));
+const AMBIGUOUS_SINGLE = new Set(`quality assurance data research clinical regulatory monitoring reporting compliance review software computer trial trials action actions process processes documentation submission findings subject certification certified license licensed licensure registration registered credential`.split(/\s+/));
 
 const TECH_SINGLE_TERMS = new Set(`python sql tableau powerbi power-bi excel outlook powerpoint salesforce jira sap epic workday aws azure javascript typescript java c++ c# r matlab sas spss snowflake servicenow github git docker kubernetes terraform`.split(/\s+/));
 
