@@ -17,6 +17,66 @@ const REQUIREMENT_SIGNAL = /\b(required|requirements?|must|minimum|at least|cert
 const PREFERRED_SIGNAL = /\b(preferred|ideally|desired|a plus|nice to have)\b/i;
 const BOILERPLATE_SENTENCE = /\b(equal opportunity|without regard to|conditions of employment|reasonable accommodation|work authorization|e-verify|salary range|total rewards|benefits may include|consideration for work authorization|anti-discrimination|protected veteran|sexual orientation|gender identity|pre-placement health|background check|misconduct policy|legal right to work|vaccination policies|smoking and tobacco|drug free environment)\b/i;
 
+const REQUIRED_SECTION_HEADING = /^(?:required|minimum|basic|essential|mandatory)(?:\s+(?:qualifications?|requirements?|education|experience|skills?|licenses?|certifications?|credentials?))?\s*:?$/i;
+const PREFERRED_SECTION_HEADING = /^(?:preferred|desired|additional|nice[- ]to[- ]have)(?:\s+(?:qualifications?|requirements?|education|experience|skills?|licenses?|certifications?|credentials?))?\s*:?$/i;
+const GENERIC_REQUIREMENT_HEADING = /^(?:qualifications?|requirements?|education\s+(?:and|&)\s+experience|licenses?\s+(?:and|&)\s+certifications?|certifications?\s+(?:and|&)\s+licenses?)\s*:?$/i;
+const NON_REQUIREMENT_HEADING = /^(?:about(?:\s+the\s+job|\s+us|\s+the\s+company|\s+[a-z0-9 &'-]+)?|description|job description|responsibilities|key responsibilities|duties|essential functions|what you(?:'|’)ll do|why join[^.]*|benefits|compensation|salary|pay range|about the team|our culture)\s*:?\??$/i;
+const STRONG_REQUIREMENT_SIGNAL = /\b(?:required|required to|must\s+(?:have|hold|possess|be|meet|obtain|maintain)|minimum\s+(?:of\s+)?|at\s+least|licen[cs](?:e|ed|ure)|certif(?:ication|ied)|registration|registered|degree|years?\s+of\s+experience|proficiency\s+in|experience\s+(?:with|in)|knowledge\s+of)\b/i;
+const TIMING_PREFIX = /^(upon\s+hire|at\s+hire|at\s+time\s+of\s+hire|by\s+(?:the\s+)?date\s+of\s+hire|prior\s+to\s+hire|before\s+(?:hire|start(?:ing)?)|within\s+\d+\s+(?:days?|weeks?|months?)\s+(?:of|after)\s+(?:hire|start(?:ing)?))\s*[:\-–—]\s*/i;
+
+function cleanRequirementText(value) {
+  return String(value ?? '')
+    .replace(/^[\s•▪◦*-]+/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function splitRequirementLine(value) {
+  const line = cleanRequirementText(value);
+  if (!line) return [];
+  if (line.length <= 180) return [line];
+  return line.split(/(?<=[.!?;])\s+/).map(cleanRequirementText).filter(Boolean);
+}
+
+function requirementSectionKind(value) {
+  const line = cleanRequirementText(value);
+  if (!line) return null;
+  if (PREFERRED_SECTION_HEADING.test(line)) return 'preferred';
+  if (REQUIRED_SECTION_HEADING.test(line) || GENERIC_REQUIREMENT_HEADING.test(line)) return 'required';
+  if (NON_REQUIREMENT_HEADING.test(line)) return 'other';
+  return null;
+}
+
+function normalizeRequirementCandidate(value, inheritedType = null) {
+  let text = cleanRequirementText(value);
+  if (!text) return null;
+
+  let type = inheritedType === 'preferred' ? 'preferred' : 'required';
+  let timing = '';
+
+  const timingMatch = text.match(TIMING_PREFIX);
+  if (timingMatch) {
+    timing = cleanRequirementText(timingMatch[1]);
+    text = cleanRequirementText(text.slice(timingMatch[0].length));
+  }
+
+  const preferredPrefix = text.match(/^(?:preferred|desired|nice[- ]to[- ]have)\s*[:\-–—]\s*/i);
+  if (preferredPrefix) {
+    type = 'preferred';
+    text = cleanRequirementText(text.slice(preferredPrefix[0].length));
+  }
+
+  const requiredPrefix = text.match(/^(?:required|minimum)\s*[:\-–—]\s*/i);
+  if (requiredPrefix) {
+    type = 'required';
+    text = cleanRequirementText(text.slice(requiredPrefix[0].length));
+  }
+
+  if (!text || requirementSectionKind(text)) return null;
+  return { text, type, timing };
+}
+
+
 const CONCEPT_PATTERNS = [
   concept('quality assurance', /\bquality assurance\b|\bQA\b/i, ['quality assurance', 'qa']),
   concept('quality control', /\bquality control\b|\bQC\b/i, ['quality control', 'qc']),
@@ -239,13 +299,37 @@ export function resolveTargetConcepts(jobDescription, overrides = {}, limit = 24
 
 export function extractRequirementSignals(jobDescription, limit = 18) {
   const results = [];
-  for (const sentence of significantSentenceList(jobDescription)) {
-    if (!REQUIREMENT_SIGNAL.test(sentence)) continue;
-    const type = PREFERRED_SIGNAL.test(sentence) ? 'preferred' : 'required';
-    if (results.some((item) => item.text.toLowerCase() === sentence.toLowerCase())) continue;
-    results.push({ text: sentence, type });
-    if (results.length >= limit) break;
+  let section = 'other';
+
+  const rawLines = String(jobDescription ?? '').split(/\n+/);
+  for (const rawLine of rawLines) {
+    const cleanedLine = cleanRequirementText(rawLine);
+    if (!cleanedLine) continue;
+
+    const sectionKind = requirementSectionKind(cleanedLine);
+    if (sectionKind) {
+      section = sectionKind;
+      continue;
+    }
+
+    for (const sentence of splitRequirementLine(cleanedLine)) {
+      if (BOILERPLATE_SENTENCE.test(sentence)) continue;
+
+      const inRequirementSection = section === 'required' || section === 'preferred';
+      const explicit = STRONG_REQUIREMENT_SIGNAL.test(sentence) || PREFERRED_SIGNAL.test(sentence);
+      if (!inRequirementSection && !explicit) continue;
+
+      const item = normalizeRequirementCandidate(sentence, inRequirementSection ? section : null);
+      if (!item) continue;
+      if (!inRequirementSection && !STRONG_REQUIREMENT_SIGNAL.test(item.text) && !PREFERRED_SIGNAL.test(sentence)) continue;
+
+      const key = item.text.toLowerCase();
+      if (results.some((existing) => existing.text.toLowerCase() === key)) continue;
+      results.push(item);
+      if (results.length >= limit) return results;
+    }
   }
+
   return results;
 }
 
