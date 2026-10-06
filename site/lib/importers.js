@@ -242,6 +242,26 @@ function parseDateRange(value) {
   return { start: cleanLine(match[1]), end: cleanLine(match[2]), current: /present|current|now/i.test(match[2]) };
 }
 
+function looksLikeExperienceLocation(value) {
+  const line = cleanLine(value);
+  return /\b(remote|hybrid|on[- ]?site)\b/i.test(line) || /,\s*[A-Z]{2}(?:\s+\d{5}(?:-\d{4})?)?$/i.test(line);
+}
+
+function hasCombinedRoleHeader(value) {
+  return cleanLine(value).split(/\s+(?:—|–|\|)\s+/).filter(Boolean).length >= 2;
+}
+
+function experienceHeaderStart(lines, dateIndex, lowerBound) {
+  const last = lines[dateIndex - 1] ?? '';
+  const prior = lines[dateIndex - 2] ?? '';
+  let lineCount = 2;
+
+  if (looksLikeExperienceLocation(last)) lineCount = hasCombinedRoleHeader(prior) ? 2 : 3;
+  else if (hasCombinedRoleHeader(last)) lineCount = 1;
+
+  return Math.max(lowerBound, dateIndex - lineCount);
+}
+
 function parseExperiences(lines) {
   const useful = lines.map(cleanLine).filter(Boolean);
   const dateIndexes = useful
@@ -251,14 +271,7 @@ function parseExperiences(lines) {
 
   const headerStarts = dateIndexes.map((dateIndex, roleIndex) => {
     const lowerBound = roleIndex ? dateIndexes[roleIndex - 1] + 1 : 0;
-    let start = dateIndex;
-    let inspected = 0;
-    for (let index = dateIndex - 1; index >= lowerBound && inspected < 3; index -= 1) {
-      if (BULLET_PREFIX.test(useful[index]) || isSubroleDateLine(useful[index])) break;
-      start = index;
-      inspected += 1;
-    }
-    return start;
+    return experienceHeaderStart(useful, dateIndex, lowerBound);
   });
 
   return dateIndexes.map((dateIndex, roleIndex) => {
