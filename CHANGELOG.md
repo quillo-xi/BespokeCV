@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.4.0 — 2026-10-06
+
+Resume intelligence v2 and holistic coaching.
+
+- Added a dedicated local review engine for bullet quality and resume-wide consistency.
+- Replaced the old “action verb + number” emphasis with a multidimensional evidence model covering scale, frequency, outcomes, standards, tools/systems, ownership, complexity/risk, and audience/collaboration.
+- Readiness Review now reports meaningful-context, outcome, action-opening, and scale/frequency counts separately.
+- Evidence examples no longer turn enumerated nouns into artificial metrics; they either make a safe wording improvement or ask a targeted question for missing context.
+- Coaching now works without a target posting, providing general resume improvement guidance before job-specific tailoring begins.
+- Target-specific bullet ordering now considers both job relevance and evidence quality instead of keyword overlap alone.
+- Added per-role “best bullets to strengthen” prompts and evidence-signal tags.
+- Added resume-wide checks for obvious date conflicts, past-role tense patterns, repeated bullet openings, very similar bullets, duplicate skills, and generic summary clichés.
+- Headline coaching no longer automatically adopts a substantially different target title; it starts from the candidate’s current professional identity unless the target title is closely aligned.
+- Summary coaching leads with supported strengths and surfaces strong existing work evidence worth considering.
+- Updated readiness scoring so resumes without a target posting are not artificially penalized by a placeholder target score.
+- Added general-coaching, multidimensional evidence, consistency, duplicate-content, headline-safety, and no-invented-metric regression coverage.
+- Added no schema migration; resume schema remains version 4.
+
+
 ## 0.3.8 — 2026-10-06
 
 Resume-grounded evidence diagnostics.
