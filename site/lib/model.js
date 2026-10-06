@@ -1,7 +1,7 @@
-export const APP_VERSION = '0.3.2';
+export const APP_VERSION = '0.3.3';
 
 export const createBlankResume = () => ({
-  schemaVersion: 3,
+  schemaVersion: 4,
   profile: {
     fullName: '',
     cityState: '',
@@ -21,6 +21,7 @@ export const createBlankResume = () => ({
   jobSourceTitle: '',
   jobSourceCompany: '',
   targetConceptOverrides: { added: [], excluded: [] },
+  careerSources: [createCareerSource()],
   importedSource: { fileName: '', format: '', importedAt: '', text: '' }
 });
 
@@ -44,6 +45,18 @@ export function createEducation() {
     school: '',
     location: '',
     graduation: ''
+  };
+}
+
+export function createCareerSource() {
+  return {
+    id: cryptoSafeId(),
+    label: '',
+    text: '',
+    fileName: '',
+    fileFormat: '',
+    fileText: '',
+    importedAt: ''
   };
 }
 
@@ -75,6 +88,18 @@ export function normalizeResume(input) {
       added: Array.isArray(input.targetConceptOverrides?.added) ? input.targetConceptOverrides.added.map(String) : [],
       excluded: Array.isArray(input.targetConceptOverrides?.excluded) ? input.targetConceptOverrides.excluded.map(String) : []
     },
+    careerSources: Array.isArray(input.careerSources) && input.careerSources.length
+      ? input.careerSources.map((item) => ({
+          ...createCareerSource(),
+          ...(item ?? {}),
+          label: String(item?.label ?? ''),
+          text: String(item?.text ?? ''),
+          fileName: String(item?.fileName ?? ''),
+          fileFormat: String(item?.fileFormat ?? ''),
+          fileText: String(item?.fileText ?? ''),
+          importedAt: String(item?.importedAt ?? '')
+        }))
+      : base.careerSources,
     importedSource: { ...base.importedSource, ...(input.importedSource ?? {}) }
   };
 }
