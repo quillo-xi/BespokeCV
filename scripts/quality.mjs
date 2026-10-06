@@ -84,7 +84,7 @@ const publicFiles = [
   'site/lib/importers.js','site/lib/job-source.js','site/ui/shared.js','site/ui/editor.js','site/ui/review.js','site/ui/optimized.js','site/ui/preview.js'
 ];
 const publicBytes = publicFiles.reduce((sum, file) => sum + fs.statSync(path.join(root, file)).size, 0);
-if (publicBytes > 440_000) failures.push(`Core app exceeded 390 KB source budget (${publicBytes} bytes, excluding reviewed PDF.js vendor assets).`);
+if (publicBytes > 440_000) failures.push(`Core app exceeded 440 KB source budget (${publicBytes} bytes, excluding reviewed PDF.js vendor assets).`);
 
 if (failures.length) {
   console.error(`Quality gate failed with ${failures.length} issue(s):\n- ${failures.join('\n- ')}`);
