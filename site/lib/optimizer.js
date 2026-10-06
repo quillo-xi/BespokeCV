@@ -98,11 +98,82 @@ function evidenceForTerm(entries, term) {
   return entries.filter((entry) => textSupportsTerm(entry.text, term)).slice(0, 3);
 }
 
+const CREDENTIAL_SIGNAL = /\b(?:licen[cs](?:e|ed|ure)|certif(?:ication|ied)|registration|registered|credential)\b/i;
+const CREDENTIAL_NOISE = new Set(`license licensed licence licenced licensure certification certified registration registered credential current active valid required preferred must state board department agency authority issued expires expiration professional professional-level hold holds holding possess possesses possession maintain maintains maintaining`.split(/\s+/));
+const US_JURISDICTIONS = [
+  ['alabama','al'],['alaska','ak'],['arizona','az'],['arkansas','ar'],['california','ca'],['colorado','co'],['connecticut','ct'],['delaware','de'],['florida','fl'],['georgia','ga'],['hawaii','hi'],['idaho','id'],['illinois','il'],['indiana','in'],['iowa','ia'],['kansas','ks'],['kentucky','ky'],['louisiana','la'],['maine','me'],['maryland','md'],['massachusetts','ma'],['michigan','mi'],['minnesota','mn'],['mississippi','ms'],['missouri','mo'],['montana','mt'],['nebraska','ne'],['nevada','nv'],['new hampshire','nh'],['new jersey','nj'],['new mexico','nm'],['new york','ny'],['north carolina','nc'],['north dakota','nd'],['ohio','oh'],['oklahoma','ok'],['oregon','or'],['pennsylvania','pa'],['rhode island','ri'],['south carolina','sc'],['south dakota','sd'],['tennessee','tn'],['texas','tx'],['utah','ut'],['vermont','vt'],['virginia','va'],['washington','wa'],['west virginia','wv'],['wisconsin','wi'],['wyoming','wy'],['district of columbia','dc']
+];
+
+function credentialWords(value) {
+  return String(value ?? '')
+    .toLowerCase()
+    .replace(/[’']/g, '')
+    .replace(/[^a-z0-9+# ]/g, ' ')
+    .split(/\s+/)
+    .filter((word) => word.length > 1 && !CREDENTIAL_NOISE.has(word));
+}
+
+function jurisdictionIn(value) {
+  const normalized = ` ${String(value ?? '').toLowerCase().replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ')} `;
+  const compactTokens = new Set(normalized.trim().split(/\s+/));
+  return US_JURISDICTIONS.find(([name, code]) => normalized.includes(` ${name} `) || compactTokens.has(code)) ?? null;
+}
+
+function credentialRequirementEvidence(resume, requirementText) {
+  if (!CREDENTIAL_SIGNAL.test(requirementText)) return [];
+
+  const certifications = (resume.certifications ?? []).map((item) => String(item ?? '').trim()).filter(Boolean);
+  if (!certifications.length) return [];
+
+  const requirementJurisdiction = jurisdictionIn(requirementText);
+  const certificationBlock = certifications.join(' ');
+  const certificationJurisdiction = jurisdictionIn(certificationBlock);
+
+  if (requirementJurisdiction && (!certificationJurisdiction || certificationJurisdiction[0] !== requirementJurisdiction[0])) {
+    return [];
+  }
+
+  const requirementTokens = credentialWords(requirementText)
+    .filter((word) => !US_JURISDICTIONS.some(([name, code]) => name.split(' ').includes(word) || code === word));
+  if (!requirementTokens.length) return [];
+
+  const blockTokens = new Set(credentialWords(certificationBlock));
+  const matchedTokens = requirementTokens.filter((word) => blockTokens.has(word));
+  const requiredRatio = requirementTokens.length <= 2 ? 1 : 0.75;
+
+  if (matchedTokens.length / requirementTokens.length < requiredRatio) return [];
+
+  const scored = certifications
+    .map((text, index) => {
+      const tokens = new Set(credentialWords(text));
+      const tokenMatches = requirementTokens.filter((word) => tokens.has(word)).length;
+      const hasJurisdiction = requirementJurisdiction ? jurisdictionIn(text)?.[0] === requirementJurisdiction[0] : false;
+      const authoritySignal = /\b(?:board|department|agency|authority|registry|commission)\b/i.test(text);
+      return { text, index, score: tokenMatches * 3 + (hasJurisdiction ? 3 : 0) + (authoritySignal ? 1 : 0) };
+    })
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || a.index - b.index);
+
+  const best = scored[0];
+  if (!best) return [];
+
+  return [{
+    kind: 'certification',
+    label: 'Certification / license',
+    text: best.text
+  }];
+}
+
 function requirementStatus(resume, entries, requirement) {
   const keyTerms = extractKeywords(requirement.text, 6);
   const supported = keyTerms.filter((item) => evidenceForTerm(entries, item.term).length);
   const ratio = keyTerms.length ? supported.length / keyTerms.length : 0;
   const text = requirement.text.toLowerCase();
+  const credentialEvidence = credentialRequirementEvidence(resume, requirement.text);
+
+  if (credentialEvidence.length) {
+    return { status: 'covered', keyTerms, supported, credentialEvidence };
+  }
 
   if (/bachelor|b\.a\.|b\.s\.|degree/.test(text)) {
     const educationText = resume.education.map((item) => item.degree).join(' ');
@@ -327,7 +398,10 @@ export function buildCoachingPlan(resume) {
 
   const requirementReview = requirements.map((requirement) => {
     const review = requirementStatus(resume, entries, requirement);
-    const evidence = review.supported.flatMap((item) => evidenceForTerm(entries, item.term)).slice(0, 3);
+    const evidence = [
+      ...(review.credentialEvidence ?? []),
+      ...review.supported.flatMap((item) => evidenceForTerm(entries, item.term))
+    ].slice(0, 3);
     const sourceContext = careerContextForRequirement(careerSources, requirement.text);
     return {
       ...requirement,
