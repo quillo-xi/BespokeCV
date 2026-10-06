@@ -7,6 +7,76 @@ const PHONE = /(?:\+?1[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?)\d{3}[\s.-]?\d{4}/;
 const URLISH = /(?:https?:\/\/|www\.|linkedin\.com\/|github\.com\/)[^\s|]+/i;
 const BULLET_PREFIX = /^[\s\u2022\u25E6\u25AA\u25CF▪◦*-]+/;
 
+const ROLE_HEADLINE_WORDS = /\b(?:accountant|administrator|advisor|analyst|architect|attorney|auditor|chemist|clinician|consultant|coordinator|designer|developer|director|educator|engineer|executive|leader|manager|nurse|officer|operator|pharmacist|planner|producer|professional|programmer|recruiter|researcher|scientist|specialist|strategist|supervisor|technician|therapist|trainer|writer)\b/i;
+const US_STATE_NAMES = new Set(['alabama','alaska','arizona','arkansas','california','colorado','connecticut','delaware','florida','georgia','hawaii','idaho','illinois','indiana','iowa','kansas','kentucky','louisiana','maine','maryland','massachusetts','michigan','minnesota','mississippi','missouri','montana','nebraska','nevada','new hampshire','new jersey','new mexico','new york','north carolina','north dakota','ohio','oklahoma','oregon','pennsylvania','rhode island','south carolina','south dakota','tennessee','texas','utah','vermont','virginia','washington','west virginia','wisconsin','wyoming','district of columbia']);
+
+function normalizedWords(value) {
+  return cleanLine(value).toLowerCase().replace(/[^a-z0-9+# ]/g, ' ').split(/\s+/).filter(Boolean);
+}
+
+function looksLikeHeaderLocation(value) {
+  const line = cleanLine(value);
+  if (!line || EMAIL.test(line) || PHONE.test(line) || URLISH.test(line) || DATE_RANGE.test(line)) return false;
+  if (/^\d{1,6}\s+.+\b(?:street|st|avenue|ave|road|rd|boulevard|blvd|drive|dr|lane|ln|court|ct|way|parkway|pkwy)\b/i.test(line)) return true;
+  if (/\b(remote|hybrid|on[- ]?site|greater .+ area|metro(?:politan)? area)\b/i.test(line) && normalizedWords(line).length <= 8) return true;
+
+  const parts = line.split(',').map(cleanLine).filter(Boolean);
+  if (parts.length < 2 || parts.length > 4 || normalizedWords(line).length > 10) return false;
+
+  const lowerParts = parts.map((part) => part.toLowerCase().replace(/\./g, ''));
+  const hasRegionCode = parts.some((part) => /^[A-Z]{2}(?:\s+\d{5}(?:-\d{4})?)?$/.test(part));
+  const hasStateName = lowerParts.some((part) => US_STATE_NAMES.has(part));
+  const hasCountry = lowerParts.some((part) => /^(?:united states(?: of america)?|usa|us|canada|united kingdom|uk|australia|india|ireland|new zealand)$/.test(part));
+  return hasRegionCode || hasStateName || hasCountry;
+}
+
+function stripContactDetails(value) {
+  let line = cleanLine(value);
+  line = line.replace(new RegExp(EMAIL.source, 'ig'), ' ');
+  line = line.replace(new RegExp(PHONE.source, 'g'), ' ');
+  line = line.replace(new RegExp(URLISH.source, 'ig'), ' ');
+  return cleanLine(line.replace(/^[|·,;\s-]+|[|·,;\s-]+$/g, '').replace(/[|·;]+/g, ' '));
+}
+
+function extractHeaderLocation(header, nameCandidate) {
+  for (const raw of header) {
+    if (raw === nameCandidate) continue;
+    const stripped = stripContactDetails(raw);
+    if (stripped && looksLikeHeaderLocation(stripped)) return stripped;
+    if (looksLikeHeaderLocation(raw)) return cleanLine(raw);
+  }
+  return '';
+}
+
+function titleOverlapScore(line, roleTitles) {
+  const candidate = new Set(normalizedWords(line));
+  if (!candidate.size) return 0;
+  let best = 0;
+  for (const title of roleTitles) {
+    const titleWords = new Set(normalizedWords(title));
+    if (!titleWords.size) continue;
+    const overlap = [...candidate].filter((word) => titleWords.has(word)).length;
+    best = Math.max(best, overlap / Math.min(candidate.size, titleWords.size));
+  }
+  return best;
+}
+
+function looksLikeHeadlineCandidate(value, { nameCandidate = '', locationCandidate = '', roleTitles = [] } = {}) {
+  const line = cleanLine(value);
+  if (!line || line === nameCandidate || line === locationCandidate) return false;
+  if (EMAIL.test(line) || PHONE.test(line) || URLISH.test(line) || DATE_RANGE.test(line) || looksLikeHeaderLocation(line)) return false;
+  if (headingKind(line) || BULLET_PREFIX.test(line)) return false;
+
+  const words = normalizedWords(line);
+  if (!words.length || words.length > 14 || line.length > 120) return false;
+  if (/^[\d\W]+$/.test(line)) return false;
+
+  if (/\s[|•·]\s|\s+\/\s+/.test(line)) return true;
+  if (ROLE_HEADLINE_WORDS.test(line)) return true;
+  return titleOverlapScore(line, roleTitles) >= 0.67;
+}
+
+
 function cleanLine(value) {
   return String(value ?? '').replace(/\u00a0/g, ' ').replace(/[\t ]+/g, ' ').trim();
 }
@@ -378,10 +448,26 @@ export function parseResumeText(text, source = {}) {
   const emailLine = header.find((line) => EMAIL.test(line)) ?? normalizedText.match(EMAIL)?.[0] ?? '';
   const phoneLine = header.find((line) => PHONE.test(line)) ?? normalizedText.match(PHONE)?.[0] ?? '';
   const urls = header.flatMap((line) => line.match(new RegExp(URLISH.source, 'ig')) ?? []);
-  const nameCandidate = header.find((line) => !EMAIL.test(line) && !PHONE.test(line) && !URLISH.test(line) && line.length <= 64 && line.split(/\s+/).length >= 2 && line.split(/\s+/).length <= 6) ?? '';
-  const headlineCandidate = header.find((line) => line !== nameCandidate && !EMAIL.test(line) && !PHONE.test(line) && !URLISH.test(line) && line.length <= 100) ?? '';
+  const nameCandidate = header.find((line) =>
+    !EMAIL.test(line) &&
+    !PHONE.test(line) &&
+    !URLISH.test(line) &&
+    !looksLikeHeaderLocation(line) &&
+    line.length <= 64 &&
+    line.split(/\s+/).length >= 2 &&
+    line.split(/\s+/).length <= 6
+  ) ?? '';
+
+  const roles = parseExperiences(sections.experience);
+  const locationCandidate = extractHeaderLocation(header, nameCandidate);
+  const headlineCandidate = header.find((line) => looksLikeHeadlineCandidate(line, {
+    nameCandidate,
+    locationCandidate,
+    roleTitles: roles.map((role) => role.title).filter(Boolean)
+  })) ?? '';
 
   resume.profile.fullName = cleanLine(nameCandidate);
+  resume.profile.cityState = cleanLine(locationCandidate);
   resume.profile.email = emailLine.match(EMAIL)?.[0] ?? '';
   resume.profile.phone = phoneLine.match(PHONE)?.[0] ?? '';
   resume.profile.linkedin = urls.find((url) => /linkedin\.com/i.test(url)) ?? '';
@@ -390,7 +476,6 @@ export function parseResumeText(text, source = {}) {
   resume.profile.summary = sections.summary.filter(Boolean).join(' ');
   resume.skills = splitSkillItems(sections.skills);
   resume.certifications = sections.certifications.map((line) => cleanLine(line.replace(BULLET_PREFIX, ''))).filter(Boolean);
-  const roles = parseExperiences(sections.experience);
   if (roles.length) resume.experiences = roles;
   const education = parseEducation(sections.education);
   if (education.length) resume.education = education;
