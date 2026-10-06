@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.5 — 2026-10-06
+
+Resume headline import fidelity hotfix.
+
+- Tightened imported Professional headline detection so unclassified header text is no longer promoted automatically.
+- Added positive headline signals based on professional-role wording, headline-style separators, and similarity to parsed work-history titles.
+- Added header-location recognition so values such as city/state/country populate City, state / region instead of Headline.
+- Added explicit rejection of contact, URL, date, address/location, section-heading, and arbitrary header lines as headline candidates.
+- Added regression coverage for location-only headers, real professional headlines, and unrelated header text.
+- No schema change.
+
+
 ## 0.3.4 — 2026-10-06
 
 Resume-tailoring Coaching workspace.
