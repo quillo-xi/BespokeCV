@@ -30,14 +30,16 @@ Preferred: SoCRA or ACRP certification.
 
   const plan = buildCoachingPlan(resume);
 
-  assert.match(plan.headline.suggested, /Quality Assurance Coordinator/);
+  assert.match(plan.headline.suggested, /Quality and Operations Specialist/);
+  assert.match(plan.headline.suggested, /quality assurance/i);
   assert.match(plan.summary.suggested, /quality assurance/i);
   assert.equal(/gcp/i.test(plan.summary.suggested), false);
   assert.ok(plan.requirements.some((item) => /GCP/i.test(item.text) && item.status !== 'covered'));
   assert.ok(plan.requirements.some((item) => /SoCRA/i.test(item.text) && item.type === 'preferred'));
-  assert.ok(plan.experiences[0].bullets[0].score >= plan.experiences[0].bullets.at(-1).score);
+  assert.ok(plan.experiences[0].bullets[0].combinedScore >= plan.experiences[0].bullets.at(-1).combinedScore);
+  assert.ok(plan.generalQuality.total >= 2);
   assert.ok(plan.priorities.length >= 2);
-  assert.equal(plan.checklist.length, 6);
+  assert.equal(plan.checklist.length, 7);
 });
 
 test('coaching plan honors curated target concepts', () => {
@@ -187,4 +189,50 @@ test('credential matching does not confuse a related occupation with the require
 
   assert.ok(requirement);
   assert.notEqual(requirement.status, 'covered');
+});
+
+
+test('coaching remains useful without a target job posting', () => {
+  const resume = createBlankResume();
+  resume.profile.fullName = 'Alex Morgan';
+  resume.profile.headline = 'Operations Specialist';
+  resume.skills = ['Process Improvement', 'Reporting', 'Microsoft Excel'];
+  resume.experiences[0] = {
+    ...resume.experiences[0],
+    title: 'Operations Specialist',
+    company: 'Example Organization',
+    current: true,
+    bullets: [
+      'Managed weekly reporting for department leadership.',
+      'Responsible for process documentation.',
+      'Coordinated cross-functional reviews under internal policy.'
+    ]
+  };
+
+  const plan = buildCoachingPlan(resume);
+
+  assert.equal(plan.targetTerms.length, 0);
+  assert.equal(plan.requirements.length, 0);
+  assert.ok(plan.generalQuality.total === 3);
+  assert.ok(plan.priorities.length >= 1);
+  assert.ok(plan.experiences[0].bullets.every((item) => item.quality));
+  assert.match(plan.headline.suggested, /Operations Specialist/);
+});
+
+test('headline coaching does not automatically claim a substantially different target title', () => {
+  const resume = createBlankResume();
+  resume.profile.headline = '';
+  resume.experiences[0] = {
+    ...resume.experiences[0],
+    title: 'Customer Support Specialist',
+    company: 'Example Organization',
+    bullets: ['Resolved customer issues using CRM software.']
+  };
+  resume.jobSourceTitle = 'Senior Data Scientist';
+  resume.jobDescription = 'Required: machine learning and Python experience.';
+
+  const plan = buildCoachingPlan(resume);
+
+  assert.match(plan.headline.suggested, /^Customer Support Specialist/);
+  assert.equal(/^Senior Data Scientist/.test(plan.headline.suggested), false);
 });
