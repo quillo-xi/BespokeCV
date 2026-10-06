@@ -77,5 +77,5 @@ test('evidence examples do not create list-count metrics from enumerated nouns',
 
   const examples = buildEvidenceExamples(resume);
   assert.equal(examples.some((item) => /covering 3|3 named categories/i.test(item.after)), false);
-  assert.ok(examples.some((item) => /^Safeguarded and maintained accountability for \$2M/i.test(item.after)));
+  assert.ok(examples.some((item) => /^Safeguarded \$2M/i.test(item.after)));
 });
