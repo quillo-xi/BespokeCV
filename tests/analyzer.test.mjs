@@ -195,7 +195,7 @@ Experience with healthcare operations.
 });
 
 
-test('evidence diagnostics recognize common resume action verbs and generate grounded examples', () => {
+test('evidence diagnostics use multidimensional context rather than requiring a number', () => {
   const resume = createBlankResume();
   resume.profile.fullName = 'Alex Morgan';
   resume.profile.email = 'alex@example.com';
@@ -205,31 +205,25 @@ test('evidence diagnostics recognize common resume action verbs and generate gro
     title: 'Operations Specialist',
     company: 'Example Organization',
     bullets: [
-      'Operate and maintain Robotic Intravenous Automation (RIVA) & EXACTAMIX TPN automatic compounding systems',
-      'Project lead; managed a multidisciplinary team which led to measurable improvements to workflow and operation of RIVA',
-      'Prepare sterile IV admixtures, including hazardous, chemotherapy, and investigational drugs',
-      'Responsible for the accountability and safeguarding of $10M+ in military equipment, including sensitive items, weapon systems, vehicles, computers, and office equipment.'
+      'Operate and maintain automation systems used for production workflows.',
+      'Project lead; managed a multidisciplinary team which led to measurable improvements to workflow and operations.',
+      'Prepare specialized products under regulated procedures for high-risk use.',
+      'Responsible for the accountability and safeguarding of $10M+ in sensitive equipment.'
     ]
   };
 
   const result = analyzeResume(resume);
 
   assert.equal(result.bulletCount, 4);
-  assert.equal(result.actionCount, 3);
+  assert.ok(result.actionCount >= 3);
+  assert.ok(result.contextCount >= 3);
   assert.equal(result.metricCount, 1);
-
-  const combined = result.evidenceExamples.find((item) => item.kind === 'combined');
-  assert.ok(combined);
-  assert.match(combined.after, /^Safeguarded and maintained accountability for \$10M\+/);
-  assert.deepEqual(combined.criteria, ['Action opening', 'Measurable signal']);
-
-  const measurable = result.evidenceExamples.find((item) => item.kind === 'measure');
-  assert.ok(measurable);
-  assert.match(measurable.after, /covering 3 named categories/i);
-  assert.match(measurable.note, /already listed/i);
+  assert.ok(result.evidenceScore > 35);
+  assert.ok(result.evidenceExamples.some((item) => /Safeguarded and maintained accountability/.test(item.after)));
+  assert.equal(result.evidenceExamples.some((item) => /covering \d+ named categories/i.test(item.after)), false);
 });
 
-test('evidence diagnostics ask for a specific verified measure when no number can be derived', () => {
+test('evidence diagnostics ask for meaningful missing context instead of manufacturing metrics', () => {
   const resume = createBlankResume();
   resume.experiences[0] = {
     ...resume.experiences[0],
@@ -242,10 +236,11 @@ test('evidence diagnostics ask for a specific verified measure when no number ca
   };
 
   const result = analyzeResume(resume);
-  const prompt = result.evidenceExamples.find((item) => item.kind === 'measure-prompt');
+  const develop = result.evidenceExamples.find((item) => item.kind === 'develop');
 
-  assert.ok(prompt);
-  assert.ok(prompt.prompt);
-  assert.match(prompt.prompt, /how many|how often|count|frequency/i);
-  assert.equal(/\[.*\]/.test(prompt.after), false);
+  assert.ok(develop);
+  assert.ok(develop.questions.length >= 1);
+  assert.equal(/\[.*\]/.test(develop.after), false);
+  assert.equal(/covering \d+ named categories/i.test(develop.after), false);
 });
+

@@ -28,7 +28,7 @@ Sources:
 
 CareerOneStop emphasizes that employers may scan resumes quickly and that the top section should establish role identity and qualifications. A parser-friendly resume still must communicate fit to a person.
 
-Design rule: use a recognizable headline where appropriate, a concise value-oriented summary, focused skills, reverse-chronological experience, and bullets that quickly expose action, scope, and evidence.
+Design rule: use a recognizable headline where appropriate, a concise value-oriented summary, focused skills, reverse-chronological experience, and bullets that quickly expose action plus meaningful context. BespokeCV treats numbers as one possible evidence signal rather than a universal requirement.
 
 Source:
 - CareerOneStop, *Top portion of resume*: https://cloudfront.careeronestop.org/JobSearch/Resumes/ResumeGuide/top-portion-of-resume.aspx
@@ -39,7 +39,7 @@ Duty lists describe responsibility; accomplishment bullets demonstrate capabilit
 
 Preferred pattern: **action + scope/context + evidence/result**.
 
-Evidence may include percentage, dollars, time, quality, risk, volume, frequency, sites/regions supported, throughput, reliability, or user/customer impact.
+Evidence may include percentage, dollars, time, quality, risk, volume, frequency, sites/regions supported, throughput, reliability, or user/customer impact. Evidence can also be qualitative but still concrete: a governing standard, specialized tool/system, regulated or high-risk work, level of ownership, cross-functional breadth, audience, or clearly stated outcome. A number should clarify real scope or impact; counting nouns in a sentence does not make a bullet more persuasive.
 
 ## Length
 

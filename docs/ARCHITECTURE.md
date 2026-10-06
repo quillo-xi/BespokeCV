@@ -10,6 +10,7 @@ BespokeCV is a local-first Progressive Web App hosted from GitHub Pages. The bro
 - `site/ui/`: focused rendering modules.
 - `site/lib/model.js`: schema, normalization, and plain-text representation.
 - `site/lib/analyzer.js`: transparent local diagnostics, phrase-aware target matching, boilerplate filtering, and requirement classification.
+- `site/lib/review-engine.js`: target-independent bullet/evidence assessment, resume consistency checks, safe rewrite patterns, and resume-grounded coaching examples.
 - `site/lib/optimizer.js`: local tailoring engine for target-role priorities, resume-evidence mapping, supporting career-source context, relevance ordering, requirement coaching, and final-check guidance.
 - `site/lib/importers.js`: local DOCX/PDF/TXT/backup ingestion and conservative structure mapping.
 - `site/lib/job-source.js`: validated public job-page retrieval and inert text extraction.
@@ -43,9 +44,17 @@ Resume schema version 4 stores `targetConceptOverrides.added` and `targetConcept
 
 Job-posting requirements are parsed as structured records rather than raw trigger-word sentences. The parser recognizes required/minimum/preferred qualification sections, excludes headings and common descriptive/culture/benefits sections, and stores timing prefixes such as `Upon hire` separately from the requirement text. Coaching and Readiness Review consume the same structured requirement records and coverage status so the two surfaces cannot disagree merely because they use different parsers.
 
+## Resume intelligence v2
+
+The review engine evaluates work bullets across multiple evidence dimensions rather than treating quantification as the definition of a strong accomplishment. Signals include scale, frequency, outcome, governing standards, tools/systems, ownership, complexity/risk, and audience/collaboration. Action openings and readable length contribute to clarity, while metrics remain one optional signal.
+
+The engine also performs lightweight consistency checks for date conflicts, past-role tense patterns, repeated bullet openings, very similar bullets, duplicate skills, and generic summary clichés. These checks are coaching heuristics; they are intentionally narrow and explainable.
+
+Safe rewrites are limited to patterns where the original meaning can be preserved with high confidence. When stronger evidence would require information not present in the resume, BespokeCV asks a targeted question rather than manufacturing a number or result.
+
 ## Coaching boundary
 
-The Coaching workspace is entirely local and deterministic. It turns the target posting into a practical tailoring plan rather than generating a replacement resume. It can prioritize existing bullets, surface job-related terminology already reflected in the resume, use supporting job descriptions as context, and suggest where more detail would improve visibility.
+The Coaching workspace is entirely local and deterministic. It provides useful general resume coaching even without a target posting; when a target is present, it adds role-specific prioritization and requirement coverage rather than generating a replacement resume. It can prioritize existing bullets, surface job-related terminology already reflected in the resume, use supporting job descriptions as context, and suggest where more detail would improve visibility.
 
 Resume content remains the basis for qualification coverage. Supporting role descriptions can make prompts more specific but do not, by themselves, establish an accomplishment, metric, credential, degree, or qualification. Coaching uses the simple states **Covered**, **Needs detail**, and **Not shown yet** so the interface stays useful without repeatedly warning the user about the same boundary.
 
