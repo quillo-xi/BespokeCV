@@ -113,11 +113,88 @@ export async function extractPdfText(fileOrBuffer) {
 export function normalizeExtractedText(text) {
   return String(text ?? '')
     .replace(/\r\n?/g, '\n')
+    .split('\n')
+    .filter((line) => !isPageArtifact(line))
+    .join('\n')
     .replace(/[ \t]+\n/g, '\n')
     .replace(/\n[ \t]+/g, '\n')
     .replace(/[ \t]{2,}/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+}
+
+function isPageArtifact(line) {
+  const value = cleanLine(line);
+  if (!value) return false;
+  return /^(?:.{1,100}\s+[-–—]\s+)?page\s+\d+(?:\s+of\s+\d+)?$/i.test(value);
+}
+
+function stripEmploymentDuration(value) {
+  return cleanLine(String(value ?? '').replace(/\(\s*\d+\s+years?(?:\s+\d+\s+months?)?\s*\+?\s*\)|\(\s*\d+\s+months?\s*\+?\s*\)/gi, ''));
+}
+
+function isSubroleDateLine(line) {
+  return /^\d{1,2}\/\d{4}\s*(?:[-–—]|to)\s*\d{1,2}\/\d{4}\s+Position\s*:/i.test(cleanLine(line));
+}
+
+function collectAccomplishmentBullets(lines) {
+  const bullets = [];
+  let current = '';
+
+  const flush = () => {
+    const value = cleanLine(current);
+    if (value) bullets.push(value);
+    current = '';
+  };
+
+  for (const raw of lines) {
+    const line = cleanLine(raw);
+    if (!line) continue;
+
+    if (isSubroleDateLine(line)) {
+      flush();
+      bullets.push(line);
+      continue;
+    }
+
+    const startsBullet = BULLET_PREFIX.test(line);
+    const value = cleanLine(line.replace(BULLET_PREFIX, ''));
+    if (!value) continue;
+
+    if (startsBullet) {
+      flush();
+      current = value;
+    } else if (current) {
+      current = `${current} ${value}`;
+    } else {
+      current = value;
+    }
+  }
+
+  flush();
+  return bullets;
+}
+
+function splitSkillItems(lines) {
+  const text = lines.map(cleanLine).filter(Boolean).join(' ');
+  const items = [];
+  let current = '';
+  let depth = 0;
+
+  const flush = () => {
+    const value = cleanLine(current);
+    if (value.length > 1 && value.length < 80) items.push(value);
+    current = '';
+  };
+
+  for (const character of text) {
+    if (character === '(') depth += 1;
+    if (character === ')' && depth > 0) depth -= 1;
+    if (depth === 0 && [',', ';', '|', '•'].includes(character)) flush();
+    else current += character;
+  }
+  flush();
+  return items;
 }
 
 function headingKind(line) {
@@ -167,7 +244,9 @@ function parseDateRange(value) {
 
 function parseExperiences(lines) {
   const useful = lines.map(cleanLine).filter(Boolean);
-  const dateIndexes = useful.map((line, index) => DATE_RANGE.test(line) ? index : -1).filter((index) => index >= 0);
+  const dateIndexes = useful
+    .map((line, index) => DATE_RANGE.test(line) && !BULLET_PREFIX.test(line) && !isSubroleDateLine(line) ? index : -1)
+    .filter((index) => index >= 0);
   if (!dateIndexes.length) return [];
 
   const headerStarts = dateIndexes.map((dateIndex, roleIndex) => {
@@ -175,7 +254,7 @@ function parseExperiences(lines) {
     let start = dateIndex;
     let inspected = 0;
     for (let index = dateIndex - 1; index >= lowerBound && inspected < 3; index -= 1) {
-      if (BULLET_PREFIX.test(useful[index])) break;
+      if (BULLET_PREFIX.test(useful[index]) || isSubroleDateLine(useful[index])) break;
       start = index;
       inspected += 1;
     }
@@ -190,7 +269,9 @@ function parseExperiences(lines) {
     if (dates) Object.assign(role, dates);
 
     const dateMatch = dateLine.match(DATE_RANGE);
-    const locationFromDate = dateMatch ? cleanLine(dateLine.replace(dateMatch[0], '').replace(/^[|·, -]+|[|·, -]+$/g, '')) : '';
+    const locationFromDate = dateMatch
+      ? stripEmploymentDuration(dateLine.replace(dateMatch[0], '')).replace(/^[|·, -]+|[|·, -]+$/g, '')
+      : '';
     const combined = header[0] ?? '';
     const combinedParts = combined.split(/\s+(?:—|–|\|)\s+/).map(cleanLine).filter(Boolean);
     if (combinedParts.length >= 2) {
@@ -204,25 +285,76 @@ function parseExperiences(lines) {
     }
 
     const nextHeaderStart = roleIndex + 1 < headerStarts.length ? headerStarts[roleIndex + 1] : useful.length;
-    const bulletLines = useful.slice(dateIndex + 1, nextHeaderStart)
-      .map((line) => cleanLine(line.replace(BULLET_PREFIX, '')))
-      .filter(Boolean);
+    const bulletLines = collectAccomplishmentBullets(useful.slice(dateIndex + 1, nextHeaderStart));
     role.bullets = bulletLines.length ? bulletLines : [''];
     return role;
   }).filter((role) => role.title || role.company || role.bullets.some(Boolean));
 }
 
+function looksLikeSchool(value) {
+  return /\b(university|college|school|academy|institute|polytechnic|conservatory|coursera|edx|udemy|bootcamp)\b/i.test(value);
+}
+
+function looksLikeProgram(value) {
+  return /\b(associate|bachelor|master|doctor|ph\.?d|diploma|certificate|certification|degree|b\.?s\.?|b\.?a\.?|m\.?s\.?|m\.?a\.?|mba|high school diploma)\b/i.test(value);
+}
+
+function educationDate(line) {
+  const value = cleanLine(line);
+  const range = value.match(/\b((?:19|20)\d{2})\s*(?:[-–—]|to)\s*((?:19|20)\d{2}|Present|Current|Expected(?:\s+(?:19|20)\d{2})?)\b/i);
+  if (range) {
+    const end = range[2];
+    const year = end.match(/(?:19|20)\d{2}/)?.[0];
+    return { matched: true, graduation: year || (/present|current/i.test(end) ? 'Present' : end) };
+  }
+  const years = value.match(/\b(?:19|20)\d{2}\b/g);
+  return { matched: Boolean(years?.length), graduation: years?.at(-1) ?? '' };
+}
+
+function parseEducationBlock(block) {
+  const item = createEducation();
+  const useful = block.map(cleanLine).filter(Boolean);
+  const dateIndex = useful.findIndex((line) => educationDate(line).matched);
+  if (dateIndex >= 0) {
+    item.graduation = educationDate(useful[dateIndex]).graduation;
+    useful.splice(dateIndex, 1);
+  }
+
+  const locationIndex = useful.findIndex((line) => /,\s*[A-Z]{2}\b/.test(line) || /\bremote\b/i.test(line));
+  if (locationIndex >= 0) item.location = useful.splice(locationIndex, 1)[0];
+
+  const schoolIndex = useful.findIndex(looksLikeSchool);
+  const programIndex = useful.findIndex((line, index) => index !== schoolIndex && looksLikeProgram(line));
+
+  if (schoolIndex >= 0) item.school = useful[schoolIndex];
+  if (programIndex >= 0) item.degree = useful[programIndex];
+
+  const remaining = useful.filter((_, index) => index !== schoolIndex && index !== programIndex);
+  if (!item.school && remaining.length) item.school = remaining.shift();
+  if (!item.degree && remaining.length) item.degree = remaining.shift();
+
+  if (!item.school && item.degree && useful.length >= 2) item.school = useful.find((line) => line !== item.degree) ?? '';
+  if (!item.degree && item.school && useful.length >= 2) item.degree = useful.find((line) => line !== item.school) ?? '';
+  return item;
+}
+
 function parseEducation(lines) {
-  return splitBlocks(lines).map((block) => {
-    const item = createEducation();
-    const useful = block.filter(Boolean);
-    item.degree = useful[0] ?? '';
-    item.school = useful[1] ?? '';
-    const grad = useful.find((line) => /\b(?:19|20)\d{2}\b/.test(line));
-    item.graduation = grad?.match(/\b(?:19|20)\d{2}\b/)?.[0] ?? '';
-    item.location = useful.find((line) => /,\s*[A-Z]{2}\b/.test(line)) ?? '';
-    return item;
-  }).filter((item) => item.degree || item.school);
+  const useful = lines.map(cleanLine).filter(Boolean);
+  const blocks = [];
+  let pending = [];
+
+  for (const line of useful) {
+    pending.push(line);
+    if (educationDate(line).matched) {
+      blocks.push(pending);
+      pending = [];
+    }
+  }
+  if (pending.length) blocks.push(pending);
+
+  return blocks
+    .map(parseEducationBlock)
+    .filter((item) => item.degree || item.school);
 }
 
 export function parseResumeText(text, source = {}) {
@@ -243,7 +375,7 @@ export function parseResumeText(text, source = {}) {
   resume.profile.portfolio = urls.find((url) => !/linkedin\.com/i.test(url)) ?? '';
   resume.profile.headline = cleanLine(headlineCandidate);
   resume.profile.summary = sections.summary.filter(Boolean).join(' ');
-  resume.skills = sections.skills.join('\n').split(/[|,;•\n]/).map(cleanLine).filter((item) => item.length > 1 && item.length < 80);
+  resume.skills = splitSkillItems(sections.skills);
   resume.certifications = sections.certifications.map((line) => cleanLine(line.replace(BULLET_PREFIX, ''))).filter(Boolean);
   const roles = parseExperiences(sections.experience);
   if (roles.length) resume.experiences = roles;
