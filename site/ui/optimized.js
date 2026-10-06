@@ -11,10 +11,14 @@ function renderRequirement(item) {
   const evidence = item.evidence?.length
     ? `<ul class="evidence-list">${item.evidence.map((entry) => `<li><strong>${escapeHtml(entry.label)}:</strong> ${escapeHtml(entry.text)}</li>`).join('')}</ul>`
     : '';
+  const sourceContext = item.sourceContext?.length
+    ? `<div class="source-context"><strong>Supporting job-description context</strong><ul>${item.sourceContext.map((entry) => `<li><span>${escapeHtml(entry.label)}</span> — ${escapeHtml(entry.text)}</li>`).join('')}</ul></div>`
+    : '';
   return `<article class="gap-comment ${item.status}">
     <div class="gap-comment-head"><mark class="gap-highlight ${item.status}">${escapeHtml(statusLabel(item.status))}</mark><span>${escapeHtml(item.type)}</span></div>
     <p class="gap-requirement">${escapeHtml(item.text)}</p>
     ${evidence}
+    ${sourceContext}
     <p class="gap-coach"><strong>Coach:</strong> ${escapeHtml(item.comment)}</p>
   </article>`;
 }
@@ -25,6 +29,7 @@ function renderExperience(role) {
     <div class="optimized-role-line"><strong>${escapeHtml(role.title || 'Role')}</strong><span>${escapeHtml(dates)}</span></div>
     <div class="optimized-role-meta">${escapeHtml([role.company, role.location].filter(Boolean).join(' | '))}</div>
     ${role.bullets.length ? `<ul>${role.bullets.map((item) => `<li>${escapeHtml(item.bullet)}${item.score > 0 ? '<span class="evidence-tag">target evidence</span>' : ''}</li>`).join('')}</ul>` : ''}
+    ${role.sourceSuggestions?.length ? `<div class="role-source-ideas"><strong>Job-description context to consider</strong>${role.sourceSuggestions.map((item) => `<p><span>${escapeHtml(item.label)}:</span> ${escapeHtml(item.text)}</p>`).join('')}<small>Use only responsibilities you personally performed; add your own scope and outcome.</small></div>` : ''}
   </section>`;
 }
 
@@ -43,18 +48,19 @@ export function renderOptimizedPanel(resume, panel) {
   panel.innerHTML = `
     <div class="panel-intro">
       <h1>Optimized & ideal draft</h1>
-      <p>Compare the posting’s hypothetical “meets-all-requirements” blueprint with a personalized draft built only from evidence in your resume. Unsupported or uncertain qualifications stay highlighted with coaching comments instead of being fabricated.</p>
+      <p>Compare the posting’s hypothetical “meets-all-requirements” blueprint with a personalized draft grounded in your resume. Optional current/previous job descriptions can make coaching more specific, but they are treated as role context—not proof of accomplishments or results.</p>
     </div>
 
     <div class="optimization-key" role="note">
       <span><i class="key-dot supported"></i>Supported by resume evidence</span>
       <span><i class="key-dot review"></i>Partial / verify manually</span>
-      <span><i class="key-dot gap"></i>No supporting evidence found</span>
+      <span><i class="key-dot gap"></i>No supporting resume evidence found</span>
+      ${draft.careerContext.sourceCount ? `<span><i class="key-dot context"></i>${draft.careerContext.sourceCount} supporting job-description source${draft.careerContext.sourceCount === 1 ? '' : 's'} available for coaching context</span>` : ''}
     </div>
 
     <div class="optimized-grid">
       <section class="ideal-card" aria-labelledby="ideal-title">
-        <div class="optimized-card-head"><span class="eyebrow">Reference only — hypothetical</span><h2 id="ideal-title">Ideal target blueprint</h2><p>This is what a generic candidate satisfying the posting would need to communicate. It is not presented as your experience.</p></div>
+        <div class="optimized-card-head"><span class="eyebrow">Reference only — hypothetical</span><h2 id="ideal-title">Ideal target blueprint</h2><p>This is what a generic candidate satisfying the posting would need to communicate. When supporting job descriptions contain relevant context, the evidence patterns become more specific without treating those duties as your accomplishments.</p></div>
         <div class="ideal-resume">
           <h3>${escapeHtml(draft.idealReference.headline)}</h3>
           ${draft.company ? `<p class="ideal-company">${escapeHtml(draft.company)}</p>` : ''}
@@ -92,9 +98,11 @@ export function renderOptimizedPanel(resume, panel) {
       </section>
     </div>
 
+    ${draft.careerContext.alignedSources.length ? `<section class="form-section"><div class="section-title-row"><h2>Supporting role-description alignment</h2><p>Context, not accomplishment proof</p></div><div class="career-alignment-list">${draft.careerContext.alignedSources.map((source) => `<article><strong>${escapeHtml(source.label)}</strong><div class="keyword-wrap">${source.matchedTerms.map((term) => `<span class="keyword">${escapeHtml(term)}</span>`).join('')}</div></article>`).join('')}</div><p class="help">These sources can supply concrete terminology, systems, processes, standards, and role scope. Verify what you personally performed before incorporating any recommendation into the resume.</p></section>` : ''}
+
     <section class="form-section gap-review-section">
       <div class="section-title-row"><h2>Redline gap comments</h2><p>Never auto-filled without evidence</p></div>
-      <p class="help">These comments compare the posting against the resume currently loaded in BespokeCV. “No evidence found” means the app could not substantiate the requirement from the resume text; it does not prove that you lack the experience.</p>
+      <p class="help">These comments compare the posting against the resume currently loaded in BespokeCV. Supporting job descriptions may make the coaching more specific, but only resume evidence can move a requirement into Supported status. “No evidence found” does not prove that you lack the experience.</p>
       <div class="gap-summary">
         <span class="gap-count required"><strong>${requiredGaps.length}</strong> required items to verify</span>
         <span class="gap-count preferred"><strong>${preferredGaps.length}</strong> preferred items to verify</span>

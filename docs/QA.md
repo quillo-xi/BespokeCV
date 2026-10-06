@@ -10,13 +10,17 @@ The UI gate also rejects reintroduction of helper/example text tied to a specifi
 
 ## Manual release matrix
 
-For meaningful UI, import, or export changes, test current major browsers on Windows (Edge, Chrome, Firefox), macOS/iMac (Safari, Chrome, Firefox), iPhone/iPad (Safari and installed web app), and Android (Chrome and installed PWA). Check DOCX/PDF/TXT import, conservative draft mapping, manual/paste fallback, autosave, target URL validation, restricted-platform fallback, generic public job-page import where CORS allows, readiness analysis, narrow layouts, DOCX/TXT export, print/PDF, installation, update behavior, and offline reopen.
+For meaningful UI, import, or export changes, test current major browsers on Windows (Edge, Chrome, Firefox), macOS/iMac (Safari, Chrome, Firefox), iPhone/iPad (Safari and installed web app), and Android (Chrome and installed PWA). Check DOCX/PDF/TXT resume import, repeatable supporting job-description file/text intake, add/remove/clear behavior, conservative draft mapping, manual/paste fallback, autosave, target URL validation, restricted-platform fallback, generic public job-page import where CORS allows, readiness analysis, narrow layouts, DOCX/TXT export, print/PDF, installation, update behavior, and offline reopen.
 
 Responsive spot checks: 320, 375, 768, 1024, 1366, 1440, and wide desktop widths.
 
 ## Resume-import regression checklist
 
 The original file must never be uploaded to a BespokeCV server in the 0.2 architecture. DOCX and PDF text extraction must remain local. File size limits must be enforced. Parsed fields must be reviewable and uncertain structure must not be fabricated. The extracted source text must remain available in the local backup for audit/recovery.
+
+## Supporting job-description regression checklist
+
+At least one source card must always exist. Additional cards may be added/removed dynamically. Free text and attached-document text must remain independent so either can be cleared without destroying the other. DOCX/PDF/TXT extraction stays local and follows the same document-size boundary as resume import. Supporting role-description text must survive normalization/backup and must never be treated as accomplishment or qualification proof. Optimized Draft may use relevant source sentences for more specific coaching while keeping requirement support status based on resume evidence.
 
 ## Job-link security regression checklist
 

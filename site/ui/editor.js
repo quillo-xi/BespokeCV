@@ -1,14 +1,27 @@
 import { escapeHtml, field } from './shared.js';
 
-export function renderResumeEditor(resume, panel) {
-  const p = resume.profile;
-  const source = resume.importedSource ?? {};
+export function renderResumeEditor(resume, panel, { activeTab = 'resume' } = {}) {
   panel.innerHTML = `
     <div class="panel-intro">
-      <h1>Build the master resume</h1>
-      <p>Start from an existing resume whenever possible. BespokeCV extracts document text locally, builds an editable draft, and keeps manual entry available for corrections or a fresh start.</p>
+      <h1>Career information</h1>
+      <p>Build from your resume and optional current/previous job descriptions. BespokeCV keeps these sources separate so formal duty information can improve tailoring without being mistaken for accomplishments.</p>
     </div>
 
+    <div class="content-tabs" role="tablist" aria-label="Career information">
+      <button class="content-tab ${activeTab === 'resume' ? 'active' : ''}" type="button" data-resume-subtab="resume" role="tab" aria-selected="${String(activeTab === 'resume')}">Resume</button>
+      <button class="content-tab ${activeTab === 'job-descriptions' ? 'active' : ''}" type="button" data-resume-subtab="job-descriptions" role="tab" aria-selected="${String(activeTab === 'job-descriptions')}">Job Descriptions</button>
+    </div>
+
+    <div class="content-tab-panel" role="tabpanel">
+      ${activeTab === 'job-descriptions' ? renderCareerSources(resume) : renderResumeContent(resume)}
+    </div>
+  `;
+}
+
+function renderResumeContent(resume) {
+  const p = resume.profile;
+  const source = resume.importedSource ?? {};
+  return `
     <section class="intake-card" aria-labelledby="resume-intake-title">
       <div>
         <span class="eyebrow">Recommended starting point</span>
@@ -65,6 +78,63 @@ export function renderResumeEditor(resume, panel) {
       <div class="section-title-row"><h2 id="cert-title">Certifications</h2><p>Use complete credential names</p></div>
       ${field('Certifications (one per line)', 'certificationsText', resume.certifications.join('\n'), { type: 'textarea', full: true, placeholder: 'Professional certification or license', rows: 3 })}
     </section>`;
+}
+
+function renderCareerSources(resume) {
+  const sources = Array.isArray(resume.careerSources) && resume.careerSources.length ? resume.careerSources : [];
+  const usableCount = sources.filter((source) => source.text?.trim() || source.fileText?.trim()).length;
+  return `
+    <section class="intake-card career-source-intro" aria-labelledby="career-source-title">
+      <div>
+        <span class="eyebrow">Optional supporting evidence</span>
+        <h2 id="career-source-title">Current & previous job descriptions</h2>
+        <p>Add formal job descriptions, duty statements, role summaries, or comparable source text that describes work you were expected to perform. BespokeCV uses these sources to make tailoring recommendations more specific.</p>
+      </div>
+      <div class="notice"><strong>Evidence boundary:</strong><span>A job description can support role context, terminology, systems, processes, and standards. It does not prove that you personally completed an accomplishment or achieved a result.</span></div>
+      <p class="help">${usableCount} source${usableCount === 1 ? '' : 's'} currently contain supporting text. Documents are parsed locally and the extracted text is saved with your BespokeCV data.</p>
+    </section>
+
+    <section class="career-source-list" aria-label="Job description sources">
+      ${sources.map((source, index) => renderCareerSourceCard(source, index, sources.length)).join('')}
+    </section>
+    <button class="add-button" type="button" data-action="add-career-source">+ Add another job description</button>
+  `;
+}
+
+function renderCareerSourceCard(source, index, total) {
+  const fileInfo = source.fileName
+    ? `<div class="source-file-row"><div class="source-chip"><strong>Attached:</strong> ${escapeHtml(source.fileName)} <span>(${escapeHtml((source.fileFormat || '').toUpperCase())})</span></div><button class="icon-button" type="button" data-action="clear-career-file" data-index="${index}">Delete attached file</button></div>`
+    : '<p class="help">No document attached. You can use the text field by itself.</p>';
+
+  return `<article class="career-source-card" data-index="${index}">
+    <div class="role-card-header">
+      <div><strong>Job description ${index + 1}</strong><span class="career-source-state">${source.fileText?.trim() || source.text?.trim() ? ' · information added' : ''}</span></div>
+      ${total > 1 ? `<button class="icon-button" type="button" data-action="remove-career-source" data-index="${index}">Remove</button>` : ''}
+    </div>
+
+    <div class="field-grid">
+      ${field('Role / source label (optional)', `careerSources.${index}.label`, source.label, { placeholder: 'Role title, employer, or source name', full: true })}
+    </div>
+
+    <div class="career-file-picker">
+      <label class="field full">
+        <span>Attach job-description document</span>
+        <input class="career-file-input" type="file" data-career-file-index="${index}" accept=".docx,.pdf,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,text/plain">
+      </label>
+      <span class="help">Word (.docx), PDF, or TXT · maximum 12 MB · parsed locally</span>
+      ${fileInfo}
+    </div>
+
+    <div class="career-text-block">
+      <label class="field full">
+        <span>Additional / pasted job-description text</span>
+        <textarea data-path="careerSources.${index}.text" rows="11" placeholder="Paste or add responsibilities, duties, systems, standards, scope, and other role-specific information here.">${escapeHtml(source.text)}</textarea>
+      </label>
+      <div class="career-source-actions">
+        <button class="btn ghost" type="button" data-action="clear-career-text" data-index="${index}" ${source.text?.trim() ? '' : 'disabled'}>Clear text</button>
+      </div>
+    </div>
+  </article>`;
 }
 
 function renderExperienceCard(resume, role, index) {

@@ -9,7 +9,8 @@ BespokeCV is a local-first Progressive Web App hosted from GitHub Pages. The bro
 - `site/app.js`: state, import, targeting, and event orchestration.
 - `site/ui/`: focused rendering modules.
 - `site/lib/model.js`: schema, normalization, and plain-text representation.
-- `site/lib/analyzer.js`: transparent local diagnostics, phrase-aware target matching, boilerplate filtering, and requirement classification.\n- `site/lib/optimizer.js`: local ideal-target blueprint, evidence mapping, relevance ordering, and gap-coaching model.
+- `site/lib/analyzer.js`: transparent local diagnostics, phrase-aware target matching, boilerplate filtering, and requirement classification.
+- `site/lib/optimizer.js`: local ideal-target blueprint, resume-evidence mapping, supporting career-source context, relevance ordering, and gap-coaching model.
 - `site/lib/importers.js`: local DOCX/PDF/TXT/backup ingestion and conservative structure mapping.
 - `site/lib/job-source.js`: validated public job-page retrieval and inert text extraction.
 - `site/lib/docx.js`: dependency-free OOXML/DOCX generation.
@@ -21,6 +22,12 @@ BespokeCV is a local-first Progressive Web App hosted from GitHub Pages. The bro
 Document attachment is the preferred starting path. DOCX packages are decompressed and read entirely in the browser using web-platform compression streams. PDF text extraction uses a pinned Mozilla PDF.js build copied into `site/vendor/` during CI; the resume file is still processed client-side. TXT and BespokeCV JSON backups are also accepted. Pasted resume text and manual typing remain fallbacks.
 
 Imported document parsing is conservative. BespokeCV stores the extracted source text locally with import metadata so users can compare the generated structured draft against the source. The parser must not invent missing dates, employers, titles, education, credentials, or accomplishments.
+
+## Supporting career-source intake
+
+The first workspace contains separate Resume and Job Descriptions subtabs. `careerSources` stores repeatable current/previous role-description sources. Each source has an optional label, independent free text, and at most one locally parsed DOCX/PDF/TXT attachment. Users add additional source cards to attach multiple files. At least one empty source card is always retained.
+
+Supporting role descriptions are not merged into the resume or target-job posting. They are contextual material only: the optimizer may use them to name concrete duties, systems, processes, standards, and role terminology, but they cannot establish an accomplishment, metric, credential, degree, or required qualification by themselves.
 
 ## Job-posting URL intake
 
@@ -42,7 +49,7 @@ CI must pass before deployment. GitHub Pages continues serving the prior success
 
 ## Data and migrations
 
-Schema version 2 stores profile, work experience, education, certifications, skills, target-job text/source metadata, and local resume-import source metadata. JSON backup is the migration/recovery format. Future schema changes must remain backward-readable through `normalizeResume` or include an explicit migration.
+Schema version 4 stores profile, work experience, education, certifications, skills, target-job text/source metadata, user-curated target concepts, repeatable supporting career/job-description sources, and local resume-import source metadata. JSON backup is the migration/recovery format. Future schema changes must remain backward-readable through `normalizeResume` or include an explicit migration.
 
 ## Dependency boundary
 

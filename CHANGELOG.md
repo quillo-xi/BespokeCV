@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.3 — 2026-10-06
+
+Career-evidence intake and source-informed optimization.
+
+- Reconfigured the first Resume workspace into nested Resume and Job Descriptions tabs.
+- Added repeatable job-description source cards with one local DOCX/PDF/TXT attachment and one independent free-text field per card.
+- Users can add/remove source cards, while the final remaining card cannot be removed; its text and attached file can still be cleared independently.
+- Extracted supporting-document text is stored locally with filename/format metadata and survives BespokeCV backups.
+- Supporting current/previous job descriptions are kept separate from target-job postings and from resume accomplishment evidence.
+- Optimized Draft now uses relevant supporting-role text to produce more concrete coaching and evidence patterns, reducing generic placeholder language.
+- Job-description context never changes a requirement to Supported by itself; resume evidence remains the support boundary.
+- Added schema, import, optimizer, and regression coverage for the new source model.
+
+
 ## 0.3.2 — 2026-10-06
 
 User-curated target-language coverage.
