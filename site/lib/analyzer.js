@@ -34,7 +34,6 @@ function cleanRequirementText(value) {
 function splitRequirementLine(value) {
   const line = cleanRequirementText(value);
   if (!line) return [];
-  if (line.length <= 180) return [line];
   return line.split(/(?<=[.!?;])\s+/).map(cleanRequirementText).filter(Boolean);
 }
 
