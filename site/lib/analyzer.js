@@ -375,15 +375,26 @@ function nonEmptyBullets(resume) {
   return resume.experiences.flatMap((role) => role.bullets ?? []).map((bullet) => bullet.trim()).filter(Boolean);
 }
 
+function isActionVerbToken(token) {
+  const value = String(token ?? '').toLowerCase();
+  if (!value) return false;
+  if (ACTION_VERBS.has(value)) return true;
+  const variants = [];
+  if (value.endsWith('ies') && value.length > 4) variants.push(`${value.slice(0, -3)}y`);
+  if (value.endsWith('es') && value.length > 4) variants.push(value.slice(0, -2));
+  if (value.endsWith('s') && value.length > 3) variants.push(value.slice(0, -1));
+  return variants.some((candidate) => ACTION_VERBS.has(candidate));
+}
+
 function startsWithActionVerb(bullet) {
   const tokens = words(bullet);
   const first = tokens[0];
-  if (first && ACTION_VERBS.has(first)) return true;
+  if (isActionVerbToken(first)) return true;
 
   const labeledLead = String(bullet ?? '').match(/^[^;:]{1,36}[;:]\s*(.+)$/);
   if (labeledLead) {
     const next = words(labeledLead[1])[0];
-    if (next && ACTION_VERBS.has(next)) return true;
+    if (isActionVerbToken(next)) return true;
   }
   return false;
 }
