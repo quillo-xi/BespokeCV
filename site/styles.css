@@ -227,7 +227,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
 }
 
 
-/* Optimized draft / evidence-redline workspace */
+/* Coaching workspace */
 /* Coaching workspace */
 body.coaching-mode .workspace { grid-template-columns: 1fr; }
 body.coaching-mode .editor-pane { border-right: 0; }
