@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.1 — 2026-10-06
+
+Resume-import fidelity hotfix based on a real multi-page PDF regression review.
+
+- Remove common `Name - page N` / `Page N` artifacts before section parsing so headers/footers do not bleed into employers, education, skills, or other fields.
+- Rejoin wrapped PDF lines into the originating accomplishment bullet instead of creating fragmented one- or two-word bullets.
+- Preserve internal dated sub-role markers without misclassifying them as separate employers.
+- Treat parenthetical employment duration as metadata rather than a location.
+- Parse education as school + program/degree + completion date, using the end year of a year range as the completion year.
+- Preserve wrapped parenthetical skill names across PDF line breaks.
+- Added regression coverage for multi-page footer boundaries, wrapped bullets, duration/location confusion, education ordering, completion-year selection, and wrapped skills.
+
 ## 0.2.0 — 2026-10-06
 
 Document-first intake and safe target sourcing.
