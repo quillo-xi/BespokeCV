@@ -77,3 +77,43 @@ All work is performed under applicable university policy.
   assert.equal(terms.includes('all'), false);
   assert.equal(terms.includes('under'), false);
 });
+
+
+test('target concepts reject sentence fragments while preserving canonical resume concepts', () => {
+  const posting = `
+Quality Assurance Coordinator
+Conduct quality assurance monitoring and auditing for clinical research.
+Oversee the corrective and preventive action (CAPA) process.
+Required: strong understanding of clinical research conduct (GCP, ICH guidelines).
+Required: review timely and accurate submission of clinical trial data and report findings.
+Required: working knowledge of computer software including Microsoft Office (Outlook, Word, Excel, PowerPoint).
+Preferred: SoCRA or ACRP certification.
+Preferred: monitoring or auditing FDA regulated studies for highly complex clinical trials.
+Preferred: Clinical Trial Professional certification.
+`;
+  const terms = extractKeywords(posting, 24).map((item) => item.term);
+
+  for (const expected of [
+    'quality assurance',
+    'clinical research',
+    'monitoring and auditing',
+    'CAPA',
+    'GCP',
+    'ICH guidelines',
+    'clinical trial data',
+    'Microsoft Office',
+    'SoCRA / ACRP certification',
+    'FDA-regulated studies'
+  ]) assert.ok(terms.includes(expected), `missing expected concept: ${expected}`);
+
+  for (const fragment of [
+    'assurance coordinator',
+    'computer software',
+    'software including',
+    'accurate submission',
+    'submission clinical',
+    'preventive action',
+    'knowledge computer',
+    'highly complex'
+  ]) assert.equal(terms.includes(fragment), false, `sentence fragment leaked: ${fragment}`);
+});

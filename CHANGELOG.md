@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.1 — 2026-10-06
+
+Target-language precision hotfix.
+
+- Replaced arbitrary multi-word n-gram output with canonical concept extraction plus conservative repeated-term fallback.
+- Added explicit handling for common standards, credentials, tools, and resume concepts such as CAPA, GCP, ICH guidelines, Microsoft Office, monitoring/auditing, and SoCRA/ACRP certification.
+- Preserved useful standalone technologies when repeated while suppressing ambiguous component words.
+- Renamed review labels from terms to concepts and added regression coverage for the sentence-fragment patterns observed in the UCI Quality Assurance Coordinator posting.
+
+
 ## 0.3.0 — 2026-10-06
 
 Target intelligence and evidence-grounded optimized drafting.

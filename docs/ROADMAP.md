@@ -14,7 +14,7 @@ Multi-page PDF cleanup for repeating page artifacts, wrapped accomplishment bull
 
 ## 0.3 — Resume intelligence — in progress
 
-Completed in 0.3.0: phrase-aware target-language extraction, required/preferred qualification mapping, ideal-target blueprint, evidence-grounded optimized draft, and redline-style gap coaching that does not fabricate qualifications.
+Completed in 0.3.0–0.3.1: canonical concept-level target-language extraction, required/preferred qualification mapping, ideal-target blueprint, evidence-grounded optimized draft, and redline-style gap coaching that does not fabricate qualifications.
 
 Remaining: date and experience consistency checks, repetition/tense/bullet-quality checks, multiple local resume variants, and accessible section/work-history reordering.
 
