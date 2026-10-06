@@ -1,5 +1,6 @@
 import { extractKeywords, extractRequirementSignals, resolveTargetConcepts, textSupportsTerm } from './analyzer.js';
 import { resumeToPlainText } from './model.js';
+import { analyzeResumeQuality, assessBullet } from './review-engine.js';
 
 function listJoin(items) {
   const values = items.filter(Boolean);
@@ -270,26 +271,48 @@ function roleSourceSuggestions(role, sources, targetTerms) {
   return suggestions;
 }
 
-function buildHeadlineStarter(resume, targetTitle, supportedTerms) {
-  const strengths = supportedTerms.slice(0, 2).map((item) => item.term);
-  if (targetTitle && targetTitle !== 'Target role') {
-    return strengths.length ? `${targetTitle} | ${strengths.join(' | ')}` : targetTitle;
-  }
-  return resume.profile.headline?.trim() || strengths.join(' | ') || 'Professional headline';
+function titleWords(value) {
+  return new Set(String(value ?? '').toLowerCase().match(/[a-z][a-z0-9+#-]*/g) ?? []);
 }
 
-function buildSummaryStarter(resume, targetTitle, supportedTerms) {
-  const identity = resume.profile.headline?.trim()
+function titleSimilarity(a, b) {
+  const left = titleWords(a);
+  const right = titleWords(b);
+  if (!left.size || !right.size) return 0;
+  const shared = [...left].filter((word) => right.has(word)).length;
+  return shared / Math.min(left.size, right.size);
+}
+
+function currentProfessionalIdentity(resume) {
+  return resume.profile.headline?.trim()
+    || resume.experiences.find((role) => role.current && role.title?.trim())?.title?.trim()
     || resume.experiences.find((role) => role.title?.trim())?.title?.trim()
     || 'Experienced professional';
-  const strengths = supportedTerms.slice(0, 4).map((item) => item.term);
-  const targetPhrase = targetTitle && targetTitle !== 'Target role' ? ` for ${targetTitle} opportunities` : '';
-  const strengthPhrase = strengths.length ? ` with experience in ${listJoin(strengths)}` : '';
-  const firstSentence = resume.profile.summary?.trim().split(/(?<=[.!?])\s+/)[0]?.trim() || '';
+}
 
-  const opening = `${identity}${strengthPhrase}${targetPhrase}.`;
-  if (!firstSentence || firstSentence.toLowerCase() === opening.toLowerCase()) return opening;
-  return `${opening} ${firstSentence}`;
+function buildHeadlineStarter(resume, targetTitle, supportedTerms) {
+  const strengths = supportedTerms.slice(0, 2).map((item) => item.term);
+  const identity = currentProfessionalIdentity(resume);
+  const canUseTargetTitle = targetTitle && targetTitle !== 'Target role' && titleSimilarity(identity, targetTitle) >= 0.5;
+  const lead = canUseTargetTitle ? targetTitle : identity;
+  return strengths.length ? `${lead} | ${strengths.join(' | ')}` : lead;
+}
+
+function buildSummaryStarter(resume, supportedTerms) {
+  const identity = currentProfessionalIdentity(resume);
+  const strengths = supportedTerms.slice(0, 4).map((item) => item.term);
+  const opening = strengths.length
+    ? `${identity} with experience in ${listJoin(strengths)}.`
+    : `${identity}.`;
+
+  const existing = resume.profile.summary?.trim().split(/(?<=[.!?])\s+/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .find((item) => !/^(?:seeking|looking for|objective\b|to obtain\b)/i.test(item));
+
+  return existing && existing.toLowerCase() !== opening.toLowerCase()
+    ? `${opening} ${existing}`
+    : opening;
 }
 
 function sourceSupportedTerms(missingTerms, sources) {
@@ -301,7 +324,7 @@ function sourceSupportedTerms(missingTerms, sources) {
     .filter(Boolean);
 }
 
-function buildPriorityActions(resume, targetTitle, supportedTerms, missingTerms, requirementReview, experiences, skillsToAdd) {
+function buildPriorityActions(resume, targetTitle, supportedTerms, missingTerms, requirementReview, experiences, skillsToAdd, quality) {
   const actions = [];
   const headline = resume.profile.headline?.trim();
   const targetInHeadline = targetTitle && targetTitle !== 'Target role' && headline && headline.toLowerCase().includes(targetTitle.toLowerCase());
@@ -341,6 +364,10 @@ function buildPriorityActions(resume, targetTitle, supportedTerms, missingTerms,
     });
   }
 
+  for (const item of quality.opportunities.slice(0, 2)) {
+    if (!actions.some((existing) => existing.title === item.title)) actions.push(item);
+  }
+
   const requiredNeedsWork = requirementReview.filter((item) => item.type === 'required' && item.status !== 'covered');
   if (requiredNeedsWork.length) {
     actions.push({
@@ -359,7 +386,7 @@ function buildPriorityActions(resume, targetTitle, supportedTerms, missingTerms,
   return actions.slice(0, 5);
 }
 
-function finalChecklist(resume, requirementReview, experiences, supportedTerms) {
+function finalChecklist(resume, requirementReview, experiences, supportedTerms, quality) {
   const requiredOpen = requirementReview.filter((item) => item.type === 'required' && item.status !== 'covered').length;
   const hasRelevantBullet = experiences.some((role) => role.bullets.some((item) => item.score > 0));
   return [
@@ -384,6 +411,12 @@ function finalChecklist(resume, requirementReview, experiences, supportedTerms) 
       text: 'Skills section is focused and uses recognizable job-related terms.'
     },
     {
+      done: quality.consistencyIssues.filter((item) => item.severity !== 'low').length === 0,
+      text: quality.consistencyIssues.filter((item) => item.severity !== 'low').length
+        ? 'Dates, duplicated content, and role-level consistency have been reviewed.'
+        : 'Dates and role-level consistency do not show obvious conflicts.'
+    },
+    {
       done: true,
       text: 'Final file stays simple, single-column, and easy for both ATS parsing and a quick human scan.'
     }
@@ -398,6 +431,7 @@ export function buildCoachingPlan(resume) {
   const entries = evidenceEntries(resume);
   const careerSources = careerSourceRecords(resume);
   const resumeText = resumeToPlainText(resume);
+  const quality = analyzeResumeQuality(resume);
 
   const supportedTerms = targetTerms.filter((item) => textSupportsTerm(resumeText, item.term));
   const missingTerms = targetTerms.filter((item) => !textSupportsTerm(resumeText, item.term));
@@ -438,23 +472,35 @@ export function buildCoachingPlan(resume) {
     ...role,
     sourceSuggestions: roleSourceSuggestions(role, careerSources, targetTerms),
     bullets: role.bullets
-      .map((bullet, index) => ({
-        bullet,
-        index,
-        score: bulletRelevance(bullet, targetTerms),
-        matches: matchedTermsForText(bullet, targetTerms, 4)
-      }))
+      .map((bullet, index) => {
+        const relevance = bulletRelevance(bullet, targetTerms);
+        const qualityAssessment = assessBullet(bullet, { currentRole: Boolean(role.current) });
+        return {
+          bullet,
+          index,
+          score: relevance,
+          combinedScore: relevance * 4 + qualityAssessment.evidenceScore,
+          matches: matchedTermsForText(bullet, targetTerms, 4),
+          quality: qualityAssessment
+        };
+      })
       .filter((item) => item.bullet?.trim())
-      .sort((a, b) => b.score - a.score || a.index - b.index)
+      .sort((a, b) => b.combinedScore - a.combinedScore || a.index - b.index)
   }));
 
   const required = requirementReview.filter((item) => item.type === 'required');
   const requiredCovered = required.filter((item) => item.status === 'covered').length;
   const preferred = requirementReview.filter((item) => item.type === 'preferred');
 
-  const summaryStarter = buildSummaryStarter(resume, targetTitle, supportedTerms);
+  const summaryStarter = buildSummaryStarter(resume, supportedTerms);
   const headlineStarter = buildHeadlineStarter(resume, targetTitle, supportedTerms);
-  const priorities = buildPriorityActions(resume, targetTitle, supportedTerms, missingTerms, requirementReview, experiences, skillsToAdd);
+  const priorities = buildPriorityActions(resume, targetTitle, supportedTerms, missingTerms, requirementReview, experiences, skillsToAdd, quality);
+
+  const strongestRelevantEvidence = experiences
+    .flatMap((role) => role.bullets.map((item) => ({ ...item, roleLabel: [role.title, role.company].filter(Boolean).join(' — ') })))
+    .filter((item) => item.score > 0 || item.quality.level === 'strong')
+    .sort((a, b) => b.combinedScore - a.combinedScore)
+    .slice(0, 4);
 
   return {
     targetTitle,
@@ -465,7 +511,10 @@ export function buildCoachingPlan(resume) {
       requiredCovered,
       requiredTotal: required.length,
       preferredTotal: preferred.length,
-      careerSourceCount: careerSources.length
+      careerSourceCount: careerSources.length,
+      strongBullets: quality.signalCounts.strong,
+      totalBullets: quality.total,
+      contextRichBullets: quality.signalCounts.meaningfulEvidence
     },
     priorities,
     targetTerms,
@@ -483,9 +532,10 @@ export function buildCoachingPlan(resume) {
       current: resume.profile.summary?.trim() || '',
       suggested: summaryStarter,
       strengths: supportedTerms.slice(0, 5).map((item) => item.term),
+      evidenceToConsider: strongestRelevantEvidence,
       reason: supportedTerms.length
-        ? 'This starter brings your strongest job-related experience into the opening lines.'
-        : 'Use the summary to connect your background to the target role in two or three short sentences.'
+        ? 'This starter leads with your current professional identity and the job-related strengths already supported elsewhere in the resume.'
+        : 'Use the summary to identify your professional role, strongest specialties, and one or two differentiators without repeating the whole work history.'
     },
     skills: {
       prioritized: skillDetails,
@@ -494,6 +544,7 @@ export function buildCoachingPlan(resume) {
     },
     experiences,
     requirements: requirementReview,
+    generalQuality: quality,
     careerContext: {
       sourceCount: careerSources.length,
       alignedSources: careerSources.map((source) => ({
@@ -502,7 +553,7 @@ export function buildCoachingPlan(resume) {
         matchedTerms: targetTerms.filter((item) => textSupportsTerm(source.text, item.term)).slice(0, 8).map((item) => item.term)
       })).filter((source) => source.matchedTerms.length)
     },
-    checklist: finalChecklist(resume, requirementReview, experiences, supportedTerms)
+    checklist: finalChecklist(resume, requirementReview, experiences, supportedTerms, quality)
   };
 }
 
