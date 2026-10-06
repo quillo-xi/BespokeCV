@@ -96,9 +96,10 @@ Jordan Taylor - page 3`;
 
 
 test('supporting job-description documents are extracted without mapping them into resume fields', async () => {
-  const file = new File([
+  const file = new Blob([
     'Operations Manager\nResponsibilities include vendor management, quarterly compliance reviews, and process improvement across regional teams.'
-  ], 'operations-manager.txt', { type: 'text/plain' });
+  ], { type: 'text/plain' });
+  Object.defineProperty(file, 'name', { value: 'operations-manager.txt' });
 
   const result = await importSupportingDocument(file);
   assert.equal(result.fileName, 'operations-manager.txt');
