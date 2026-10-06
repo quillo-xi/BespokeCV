@@ -171,6 +171,13 @@ function requirementStatus(resume, entries, requirement) {
   const text = requirement.text.toLowerCase();
   const credentialEvidence = credentialRequirementEvidence(resume, requirement.text);
 
+  if (/education\s+to\s+meet\s+(?:certification|license|registration)[^.!?]*requirement/i.test(requirement.text)) {
+    const hasEducation = resume.education.some((item) => item.school?.trim() || item.degree?.trim());
+    const hasCredential = resume.certifications.some((item) => String(item ?? '').trim());
+    if (hasEducation && hasCredential) return { status: 'covered', keyTerms, supported, credentialEvidence: [] };
+    if (hasEducation || hasCredential) return { status: 'detail', keyTerms, supported, credentialEvidence: [] };
+  }
+
   if (credentialEvidence.length) {
     return { status: 'covered', keyTerms, supported, credentialEvidence };
   }

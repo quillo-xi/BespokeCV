@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { analyzeResume, extractKeywords, extractRequirements, resolveTargetConcepts } from '../site/lib/analyzer.js';
+import { analyzeResume, extractKeywords, extractRequirementSignals, extractRequirements, resolveTargetConcepts } from '../site/lib/analyzer.js';
 import { createBlankResume, resumeToPlainText } from '../site/lib/model.js';
 
 test('extractKeywords prioritizes repeated meaningful terms and drops common words', () => {
@@ -146,4 +146,50 @@ test('readiness analysis classifies a user-added concept against resume evidence
   assert.ok(result.matchedKeywords.some((item) => item.term.toLowerCase() === 'vendor oversight'));
   assert.equal(result.matchedKeywords.some((item) => item.term.toLowerCase() === 'quality assurance'), false);
   assert.equal(result.missingKeywords.some((item) => item.term.toLowerCase() === 'quality assurance'), false);
+});
+
+
+test('requirement extraction respects qualification sections and ignores culture copy and headings', () => {
+  const posting = `
+Under the supervision and direction of the pharmacy Supervisor/staff pharmacist, fills routine orders for unit doses and prepackaged pharmaceuticals and performs related duties.
+
+Providence caregivers are not simply valued – they’re invaluable. Join our team at St Joseph Medical Center and thrive in our culture of patient-focused, whole-person care built on understanding, commitment, and mutual respect. Your voice matters here, because we know that to inspire and retain the best people, we must empower them.
+
+Required Qualifications
+
+Education to meet certification, license or registration requirement.
+Upon hire: California Pharmacy Technician License.
+Upon hire: Certified in Chemotherapy Preparation through ministry specific certification program.
+
+Why Join Providence?
+
+Our best-in-class benefits are uniquely designed to support you and your family.
+`;
+
+  const requirements = extractRequirementSignals(posting);
+
+  assert.equal(requirements.length, 3);
+  assert.deepEqual(requirements.map((item) => item.text), [
+    'Education to meet certification, license or registration requirement.',
+    'California Pharmacy Technician License.',
+    'Certified in Chemotherapy Preparation through ministry specific certification program.'
+  ]);
+  assert.deepEqual(requirements.map((item) => item.timing), ['', 'Upon hire', 'Upon hire']);
+  assert.ok(requirements.every((item) => item.type === 'required'));
+  assert.equal(requirements.some((item) => /Your voice matters|Required Qualifications|Why Join/i.test(item.text)), false);
+});
+
+test('requirement extraction keeps preferred sections separate from required sections', () => {
+  const posting = `
+Minimum Qualifications
+Three years of project management experience.
+Bachelor's degree.
+
+Preferred Qualifications
+PMP certification.
+Experience with healthcare operations.
+`;
+
+  const requirements = extractRequirementSignals(posting);
+  assert.deepEqual(requirements.map((item) => item.type), ['required', 'required', 'preferred', 'preferred']);
 });

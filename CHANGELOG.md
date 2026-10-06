@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.3.7 — 2026-10-06
+
+Requirement parsing and Coaching/Readiness alignment.
+
+- Replaced loose trigger-word requirement extraction with section-aware parsing for required, minimum, preferred, and qualification sections.
+- Requirement-section headings are no longer emitted as requirements.
+- Employer culture, benefits, and descriptive copy containing incidental words such as `must` are excluded unless they contain a strong qualification signal.
+- Timing prefixes such as `Upon hire:` are removed from the requirement text and shown separately as timing metadata.
+- Readiness Review now uses the same requirement coverage results as Coaching instead of displaying a separate raw “Qualification signals” list.
+- Job requirements now appear before target-language coverage in Readiness Review.
+- Target-language coverage is explicitly labeled as wording overlap rather than qualification coverage.
+- Generic words such as certification/license/registration are suppressed from target-language chips unless represented by a stronger concept.
+- General “education to meet certification/license/registration requirement” language can be covered when the resume already shows education and a professional credential.
+- Added regression coverage using a structured pharmacy posting with required qualifications and upon-hire credentials.
+- No schema change.
+
+
 ## 0.3.6 — 2026-10-06
 
 Credential requirement matching hotfix.

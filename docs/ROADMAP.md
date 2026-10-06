@@ -14,7 +14,7 @@ Multi-page PDF cleanup for repeating page artifacts, wrapped accomplishment bull
 
 ## 0.3 — Resume intelligence — in progress
 
-Completed in 0.3.0–0.3.6: canonical concept-level target-language extraction, user-curated target concepts, repeatable current/previous job-description evidence intake, required/preferred qualification mapping, and a comprehensive Coaching workspace for target-specific headline/summary guidance, skill ordering, work-experience emphasis, requirement coaching, source-informed detail prompts, and final application review.
+Completed in 0.3.0–0.3.7: canonical concept-level target-language extraction, user-curated target concepts, repeatable current/previous job-description evidence intake, required/preferred qualification mapping, and a comprehensive Coaching workspace for target-specific headline/summary guidance, skill ordering, work-experience emphasis, requirement coaching, source-informed detail prompts, and final application review.
 
 Remaining: date and experience consistency checks, repetition/tense/bullet-quality checks, multiple local resume variants, and accessible section/work-history reordering.
 
