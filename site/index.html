@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#172033">
+  <meta name="description" content="BespokeCV is a local-first resume builder and evidence-based ATS readiness analyzer.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <title>BespokeCV — Resume Studio</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./assets/icon-192.png">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#workspace">Skip to resume workspace</a>
+  <header class="app-header">
+    <div class="brand" aria-label="BespokeCV">
+      <span class="brand-mark" aria-hidden="true">B</span>
+      <div>
+        <strong>BespokeCV</strong>
+        <span>Evidence-first resume studio</span>
+      </div>
+    </div>
+    <div class="header-actions" role="group" aria-label="Document actions">
+      <button class="btn ghost" id="installButton" hidden>Install app</button>
+      <button class="btn ghost" id="newButton">New</button>
+      <button class="btn ghost" id="importButton">Import</button>
+      <button class="btn primary" id="exportButton" aria-haspopup="menu" aria-expanded="false">Export</button>
+      <input id="importFile" type="file" accept="application/json,.json" hidden>
+    </div>
+  </header>
+
+  <div class="privacy-bar" role="status">
+    <span class="privacy-dot" aria-hidden="true"></span>
+    <span><strong>Local-first:</strong> your resume and job description stay in this browser unless you export them.</span>
+    <span id="saveStatus" class="save-status">Ready</span>
+  </div>
+
+  <nav class="mode-tabs" aria-label="Workspace sections">
+    <button class="mode-tab active" data-mode="resume" aria-selected="true">Resume</button>
+    <button class="mode-tab" data-mode="target" aria-selected="false">Target role</button>
+    <button class="mode-tab" data-mode="review" aria-selected="false">Readiness review</button>
+    <button class="mode-tab preview-toggle" id="previewToggle" aria-pressed="false">Preview</button>
+  </nav>
+
+  <main id="workspace" class="workspace">
+    <section class="editor-pane" aria-label="Resume editor">
+      <div id="resumePanel" class="editor-panel"></div>
+      <div id="targetPanel" class="editor-panel" hidden></div>
+      <div id="reviewPanel" class="editor-panel" hidden></div>
+    </section>
+
+    <section class="preview-pane" aria-label="Resume preview">
+      <div class="preview-toolbar">
+        <div>
+          <span class="eyebrow">ATS-safe master</span>
+          <strong>Single-column preview</strong>
+        </div>
+        <div class="preview-actions">
+          <button class="btn ghost small" id="copyButton">Copy text</button>
+          <button class="btn ghost small" id="printButton">Print / PDF</button>
+        </div>
+      </div>
+      <article id="resumePreview" class="resume-sheet" aria-live="polite"></article>
+    </section>
+  </main>
+
+  <div id="exportMenu" class="export-menu" role="menu" hidden>
+    <button role="menuitem" data-export="docx"><strong>Word (.docx)</strong><span>Best editable submission format when accepted</span></button>
+    <button role="menuitem" data-export="pdf"><strong>PDF</strong><span>Print-quality copy; follow employer instructions</span></button>
+    <button role="menuitem" data-export="txt"><strong>ATS text (.txt)</strong><span>Parser-check version and plain-text fallback</span></button>
+    <button role="menuitem" data-export="json"><strong>BespokeCV backup</strong><span>Re-import later; contains all local project data</span></button>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

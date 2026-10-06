@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="BespokeCV logo">
+  <rect width="512" height="512" rx="112" fill="#172033"/>
+  <path fill="#ffffff" d="M142 112h137c67 0 108 32 108 84 0 34-18 59-49 71 40 11 62 39 62 79 0 60-47 94-124 94H142V112Zm72 61v69h57c29 0 44-11 44-35 0-23-15-34-45-34h-56Zm0 125v80h65c34 0 50-13 50-40 0-26-17-40-51-40h-64Z"/>
+</svg>

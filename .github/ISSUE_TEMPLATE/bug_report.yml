@@ -1,0 +1,33 @@
+name: Bug report
+description: Report a reproducible BespokeCV defect.
+title: "bug: "
+labels: [bug]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Include what you expected and what occurred.
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: [Windows, macOS/iMac, iPhone/iOS, iPad/iPadOS, Android, Other]
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      options: [Chrome, Edge, Firefox, Safari, Other]
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: data
+    attributes:
+      label: Data/privacy note
+      description: Do not attach a real resume unless you intend to share its contents. Prefer sanitized examples.
