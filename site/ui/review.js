@@ -70,12 +70,12 @@ export function renderReviewPanel(resume, panel, { editConcepts = false } = {}) 
   const cards = [
     ['Parse integrity', analysis.parseScore, 'Core information and standard resume structure.'],
     ['Evidence strength', analysis.evidenceScore, 'Action-oriented, quantified, concise accomplishments.'],
-    ['Target alignment', resume.jobDescription.trim() ? analysis.targetScore : '—', 'Overlap with high-signal job language; unscored until a posting is added.'],
+    ['Target-language overlap', resume.jobDescription.trim() ? analysis.targetScore : '—', 'Wording overlap with high-signal job language; qualification coverage is reviewed separately below.'],
     ['Human scan', analysis.scanScore, 'Headline, summary, skills focus, and skimmability.']
   ];
   panel.innerHTML = `
     <div class="panel-intro"><h1>Readiness review</h1><p>One diagnostic view for parser reliability, recruiter scan quality, evidence, and role alignment. It intentionally avoids pretending to reproduce any employer’s private ranking model.</p></div>
-    <div class="score-hero"><div class="score-ring" style="--score:${analysis.overall}"><span>${analysis.overall}</span></div><div class="score-copy"><h2>${scoreLabel(analysis.overall)}</h2><p>The overall readiness score is a weighted coaching signal. Treat the recommendations and missing evidence—not the number itself—as the useful output.</p></div></div>
+    <div class="score-hero"><div class="score-ring" style="--score:${analysis.overall}"><span>${analysis.overall}</span></div><div class="score-copy"><h2>${scoreLabel(analysis.overall)}</h2><p>The overall readiness score combines resume structure, accomplishment evidence, job-language overlap, and scan quality. Review the Job requirements section separately for required/preferred qualification coverage.</p></div></div>
     <div class="score-grid">${cards.map(([label,value,detail]) => `<div class="score-card"><div class="score-card-top"><span>${label}</span><span>${value}${value === '—' ? '' : '/100'}</span></div><small>${detail}</small>${value === '—' ? '' : `<div class="meter"><span style="width:${value}%"></span></div>`}</div>`).join('')}</div>
     <section class="form-section"><div class="section-title-row"><h2>Priority recommendations</h2><p>${analysis.bulletCount} accomplishment bullets reviewed</p></div><div class="recommendations">${analysis.recommendations.map((item)=>`<article class="recommendation ${item.severity}"><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.detail)}</p></article>`).join('')}</div></section>
     <section class="form-section">
@@ -92,6 +92,7 @@ export function renderReviewPanel(resume, panel, { editConcepts = false } = {}) 
         ${resume.jobDescription.trim() ? `<button class="concept-edit-toggle ${editConcepts ? 'active' : ''}" type="button" data-action="toggle-concept-edit" aria-pressed="${String(editConcepts)}">${editConcepts ? 'Done editing' : 'Edit concepts'}</button>` : ''}
       </div>
       ${resume.jobDescription.trim() ? `
+        <p class="help">This section checks useful wording overlap only. It does not decide whether a required qualification is covered; use Job requirements above for that.</p>
         ${editConcepts ? `<div class="concept-editor" role="region" aria-label="Edit target concepts">
           <form class="concept-add-form" data-form="add-target-concept">
             <label class="field"><span>Add your own target concept</span><input name="targetConcept" type="text" maxlength="80" placeholder="e.g., risk management" autocomplete="off"></label>
