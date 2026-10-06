@@ -6,6 +6,8 @@ const NOISE_TERMS = new Set(`employment misconduct applicant applicants employer
 
 const GENERIC_ROLE_WORDS = new Set(`coordinator specialist analyst manager officer assistant supervisor director lead leader staff team member members role position activities activity duties duty responsibilities responsibility studies study`.split(/\s+/));
 
+const AMBIGUOUS_SINGLE = new Set(`quality assurance data research clinical regulatory monitoring reporting compliance subject activities review skills`.split(/\s+/));
+
 const ACTION_VERBS = new Set(`achieved accelerated administered advised analyzed automated built launched coached collaborated consolidated created decreased delivered designed developed directed drove eliminated established expanded generated grew implemented improved increased led managed mentored modernized negotiated optimized orchestrated planned produced reduced redesigned resolved saved secured standardized streamlined strengthened supervised transformed upgraded validated won audited coordinated trained maintained monitored prepared supported reviewed verified facilitated oversaw conducted assessed ensured investigated documented reconciled evaluated`.split(/\s+/));
 
 const PRONOUNS = /\b(i|me|my|mine|we|our|ours)\b/i;
@@ -105,7 +107,10 @@ export function extractKeywords(jobDescription, limit = 24) {
   const phraseTerms = ranked.filter((item) => words(item.term).length > 1);
   ranked = ranked.filter((item) => {
     if (words(item.term).length > 1) return true;
-    return !phraseTerms.some((phrase) => words(phrase.term).includes(item.term) && phrase.weight >= item.weight * 0.72);
+    const containingPhrase = phraseTerms.find((phrase) => words(phrase.term).includes(item.term));
+    if (!containingPhrase) return true;
+    if (AMBIGUOUS_SINGLE.has(item.term)) return false;
+    return item.count >= 2;
   });
 
   const selected = [];
@@ -121,6 +126,18 @@ export function extractKeywords(jobDescription, limit = 24) {
       const existing = selected[nestedIndex];
       const existingTokens = words(existing.term).length;
       const itemTokens = words(item.term).length;
+
+      if (itemTokens === 1 && !AMBIGUOUS_SINGLE.has(item.term) && item.count >= 2) {
+        selected.push(item);
+        if (selected.length >= limit) break;
+        continue;
+      }
+
+      if (itemTokens >= 2 && itemTokens < existingTokens && item.count >= existing.count * 0.9) {
+        selected[nestedIndex] = item;
+        continue;
+      }
+
       if (item.weight > existing.weight * 1.28 && itemTokens >= existingTokens) selected[nestedIndex] = item;
       continue;
     }
