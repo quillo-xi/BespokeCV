@@ -162,6 +162,9 @@ function safeRewrite(text) {
   let match = original.match(/^responsible\s+for\s+(?:the\s+)?accountability\s+and\s+safeguarding\s+of\s+(.+)/i);
   if (match) return `Safeguarded and maintained accountability for ${match[1].replace(/[.]+$/, '')}.`;
 
+  match = original.match(/^responsible\s+for\s+(?:the\s+)?safeguarding\s+of\s+(.+)/i);
+  if (match) return `Safeguarded ${match[1].replace(/[.]+$/, '')}.`;
+
   match = original.match(/^provide\s+(?:full[- ]time\s+)?support\s+to\s+develop\s+and\s+administer\s+(.+?)(?:,?\s+and\s+provide\s+(.+))?\.?$/i);
   if (match) {
     const primary = match[1].replace(/[.,;]+$/, '');
