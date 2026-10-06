@@ -2,7 +2,7 @@
 
 BespokeCV is a local-first resume studio designed around current ATS parsing, AI-assisted recruiting, recruiter scan behavior, and hiring-manager readability.
 
-**Current version:** 0.3.8
+**Current version:** 0.4.0
 
 ## What it does
 
@@ -12,10 +12,10 @@ BespokeCV is a local-first resume studio designed around current ATS parsing, AI
 - Accepts a public job-posting URL, validates it through a constrained security policy, and extracts job text when the source permits safe cross-origin reading.
 - Treats restricted sources such as LinkedIn and Indeed as validated outbound links with paste fallback rather than bypassing platform protections or scraping restrictions.
 - Accepts pasted job descriptions and surfaces canonical, concept-level target language and required/preferred qualification signals while filtering common legal/employment boilerplate. Users can switch Target-language coverage into edit mode to remove detected concepts, add their own, or reset to automatic detection; curation is saved with the resume and shared with Coaching.
-- Separately scores parse integrity, evidence strength, target alignment, and human scan quality.
+- Separately scores parse integrity, multidimensional evidence/context strength, target-language overlap, and human scan quality. Evidence is not reduced to numbers: scope, outcomes, standards, tools, ownership, complexity, audience, and frequency can all strengthen a bullet.
 - Accepts multiple current/previous job-description or duty-statement sources (DOCX/PDF/TXT and/or separate free-text entries), parsed locally and stored separately from the resume. These sources provide role context for more specific tailoring coaching.
-- Adds a comprehensive **Coaching** workspace that turns the target posting into a step-by-step tailoring plan: priorities, headline/summary guidance, skill ordering, work-experience emphasis, requirement coaching, source-informed detail prompts, and a final submission checklist.
-- Readiness Review evidence diagnostics now recognize a broader set of legitimate resume action verbs and show resume-specific before/after examples for stronger action openings and measurable context. Requirement parsing is section-aware, strips timing prefixes such as `Upon hire:` into separate metadata, and shares the same coverage results with Readiness Review. Credential requirements are matched against the Certifications section using profession, jurisdiction, issuing-body context, and wording/order variations.
+- Adds a comprehensive **Coaching** workspace that works both with and without a target posting. With a target, it prioritizes relevant evidence, requirements, wording, and bullet order; without a target, it still reviews general resume quality, bullet strength, consistency, headline/summary direction, and work-history presentation.
+- Readiness Review evidence diagnostics use a dedicated review engine to assess action clarity plus meaningful evidence/context such as scope, outcomes, standards, systems, ownership, complexity, audience, and frequency. Resume-specific coaching examples preserve source facts and ask targeted questions when more context is needed. Requirement parsing is section-aware, strips timing prefixes such as `Upon hire:` into separate metadata, and shares the same coverage results with Readiness Review. Credential requirements are matched against the Certifications section using profession, jurisdiction, issuing-body context, and wording/order variations.
 - Exports a native `.docx`, ATS-readable `.txt`, browser print/PDF, and a re-importable BespokeCV JSON backup.
 - Runs as a responsive Progressive Web App (PWA) on desktop and mobile browsers with an offline fallback.
 
