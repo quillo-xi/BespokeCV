@@ -486,11 +486,11 @@ function buildEvidenceExamples(resume) {
   if (!records.length) return [];
 
   const examples = [];
-  const used = new Set();
+  const usedBullets = new Set();
   const add = (item) => {
-    const key = `${item.roleIndex}:${item.bulletIndex}:${item.kind}`;
-    if (used.has(key)) return;
-    used.add(key);
+    const key = `${item.roleIndex}:${item.bulletIndex}`;
+    if (usedBullets.has(key)) return;
+    usedBullets.add(key);
     examples.push(item);
   };
 
@@ -527,7 +527,7 @@ function buildEvidenceExamples(resume) {
 
   const weakAction = records.find((item) =>
     !startsWithActionVerb(item.bullet) &&
-    !used.has(`${item.roleIndex}:${item.bulletIndex}:combined`) &&
+    !usedBullets.has(`${item.roleIndex}:${item.bulletIndex}`) &&
     rewriteActionOpening(item.bullet)
   );
   if (weakAction) {
@@ -542,7 +542,11 @@ function buildEvidenceExamples(resume) {
     });
   }
 
-  const strong = records.find((item) => startsWithActionVerb(item.bullet) && METRIC_PATTERN.test(item.bullet));
+  const strong = records.find((item) =>
+    !usedBullets.has(`${item.roleIndex}:${item.bulletIndex}`) &&
+    startsWithActionVerb(item.bullet) &&
+    METRIC_PATTERN.test(item.bullet)
+  );
   if (strong && examples.length < 3) {
     add({
       ...strong,
@@ -556,7 +560,10 @@ function buildEvidenceExamples(resume) {
   }
 
   if (!examples.some((item) => item.criteria.includes('Measurable signal'))) {
-    const candidate = records.find((item) => !METRIC_PATTERN.test(item.bullet)) ?? records[0];
+    const candidate = records.find((item) =>
+      !usedBullets.has(`${item.roleIndex}:${item.bulletIndex}`) &&
+      !METRIC_PATTERN.test(item.bullet)
+    ) ?? records.find((item) => !METRIC_PATTERN.test(item.bullet)) ?? records[0];
     const actionRewrite = rewriteActionOpening(candidate.bullet);
     add({
       ...candidate,
