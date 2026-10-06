@@ -73,4 +73,4 @@ Production URL:
 
 ## Privacy
 
-Resume data is personal information. BespokeCV stores editable data and imported source text in browser local storage; GitHub receives only the application code and deployment assets. Exported JSON backups contain the user's entered/imported resume and target-job content and should be handled accordingly.
+Resume data is personal information. BespokeCV stores editable data and imported source text in browser local storage; GitHub receives only the application code and deployment assets. Exported JSON backups contain the user's entered/imported resume, supporting job-description sources, target-job content, and local curation choices and should be handled accordingly.
