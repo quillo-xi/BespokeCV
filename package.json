@@ -1,6 +1,6 @@
 {
   "name": "bespokecv",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "private": true,
   "type": "module",
   "description": "Local-first resume builder, tailoring coach, and readiness analyzer.",

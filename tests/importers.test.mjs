@@ -108,3 +108,74 @@ test('supporting job-description documents are extracted without mapping them in
   assert.match(result.text, /quarterly compliance reviews/);
   assert.ok(result.importedAt);
 });
+
+
+test('resume parser treats a header location as location and leaves headline empty when no headline is present', () => {
+  const text = `Nathaniel Example
+714.371.5502 | nexample@example.com
+linkedin.com/in/nathaniel-example
+Stanton, California, United States
+
+SUMMARY
+Experienced professional with a background in operations and data analysis.
+
+SKILLS
+Data Analysis | Microsoft Office
+
+WORK EXPERIENCE
+Operations Specialist
+Example Organization
+Apr 2018 – Present
+• Coordinated operational reporting and process reviews.`;
+
+  const resume = parseResumeText(text, { fileName: 'location-header.pdf', format: 'pdf' });
+
+  assert.equal(resume.profile.fullName, 'Nathaniel Example');
+  assert.equal(resume.profile.cityState, 'Stanton, California, United States');
+  assert.equal(resume.profile.headline, '');
+});
+
+test('resume parser imports a clearly identifiable professional headline without confusing nearby contact information', () => {
+  const text = `Alex Morgan
+Seattle, WA | alex@example.com | 555-555-0100
+linkedin.com/in/alex-morgan
+Senior Operations Manager | Process Improvement | Data Analytics
+
+SUMMARY
+Operations leader focused on scalable service delivery.
+
+SKILLS
+Process Improvement | Data Analysis | SQL
+
+WORK EXPERIENCE
+Senior Operations Manager
+Example Organization
+Jan 2022 – Present
+• Improved service delivery across three regional teams.`;
+
+  const resume = parseResumeText(text, { fileName: 'headline.pdf', format: 'pdf' });
+
+  assert.equal(resume.profile.cityState, 'Seattle, WA');
+  assert.equal(resume.profile.headline, 'Senior Operations Manager | Process Improvement | Data Analytics');
+});
+
+test('resume parser does not promote arbitrary header text into a professional headline', () => {
+  const text = `Taylor Jordan
+taylor@example.com | 555-555-0100
+Austin, Texas, United States
+Authorized to work in the United States
+
+SUMMARY
+Operations professional focused on service quality.
+
+WORK EXPERIENCE
+Program Coordinator
+Example Organization
+Jan 2021 – Present
+• Coordinated recurring service reviews.`;
+
+  const resume = parseResumeText(text, { fileName: 'no-headline.txt', format: 'text' });
+
+  assert.equal(resume.profile.cityState, 'Austin, Texas, United States');
+  assert.equal(resume.profile.headline, '');
+});

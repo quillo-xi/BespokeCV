@@ -16,7 +16,7 @@ Responsive spot checks: 320, 375, 768, 1024, 1366, 1440, and wide desktop widths
 
 ## Resume-import regression checklist
 
-The original file must never be uploaded to a BespokeCV server in the 0.2 architecture. DOCX and PDF text extraction must remain local. File size limits must be enforced. Parsed fields must be reviewable and uncertain structure must not be fabricated. The extracted source text must remain available in the local backup for audit/recovery.
+The original file must never be uploaded to a BespokeCV server in the 0.2 architecture. DOCX and PDF text extraction must remain local. File size limits must be enforced. Parsed fields must be reviewable and uncertain structure must not be guessed into populated fields. Header locations must map to City, state / region rather than Professional headline. A Professional headline should populate only when a positive headline signal is present; otherwise it remains blank. The extracted source text must remain available in the local backup for audit/recovery.
 
 ## Supporting job-description regression checklist
 
