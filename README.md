@@ -2,23 +2,27 @@
 
 BespokeCV is a local-first resume studio designed around current ATS parsing, AI-assisted recruiting, recruiter scan behavior, and hiring-manager readability.
 
-**Current version:** 0.1.0
+**Current version:** 0.2.0
 
 ## What it does
 
-- Builds a clean single-column resume using conventional sections.
-- Autosaves locally in the user's browser.
-- Accepts a pasted target job description and surfaces high-signal language and qualification statements.
+- Starts from an existing Word (.docx) or PDF resume by default, with TXT, backup import, paste, and manual entry as fallbacks.
+- Parses resume documents locally in the browser and creates an editable structured draft without sending the file to a BespokeCV server.
+- Builds a clean single-column resume using conventional sections and autosaves locally.
+- Accepts a public job-posting URL, validates it through a constrained security policy, and extracts job text when the source permits safe cross-origin reading.
+- Treats restricted sources such as LinkedIn and Indeed as validated outbound links with paste fallback rather than bypassing platform protections or scraping restrictions.
+- Accepts pasted job descriptions and surfaces high-signal language and qualification statements.
 - Separately scores parse integrity, evidence strength, target alignment, and human scan quality.
-- Flags coaching opportunities such as weak summaries, thin skills coverage, low measurable evidence, or missing target language.
 - Exports a native `.docx`, ATS-readable `.txt`, browser print/PDF, and a re-importable BespokeCV JSON backup.
 - Runs as a responsive Progressive Web App (PWA) on desktop and mobile browsers with an offline fallback.
 
-The application does **not** claim to reproduce a proprietary ATS score and does not send resume/job-description content to a server.
+The application does **not** claim to reproduce a proprietary ATS score. Resume files and resume content remain local in the baseline architecture. A job-link import makes a credential-free HTTPS request directly from the user's browser to the source page; the request is subject to strict validation, CORS, size/content limits, and inert text extraction.
 
 ## Production architecture
 
-The production app is the static `site/` directory. It has no runtime or package dependencies. The only permanent branch is `main`; feature/fix branches should be short-lived. One GitHub Actions workflow performs regression checks and deploys the last passing version to GitHub Pages.
+The production app is the static `site/` directory. It is framework-free. Mozilla PDF.js is the single pinned build-time browser dependency used for robust local PDF text extraction; CI copies the reviewed modules into the static site so production does not depend on an external runtime CDN.
+
+The only permanent branch is `main`; feature/fix branches should be short-lived. One GitHub Actions workflow performs regression checks and deploys the last passing version to GitHub Pages.
 
 See:
 
@@ -32,15 +36,17 @@ See:
 
 ## Local development
 
-Any static file server works. For example:
+Install the exact reviewed development dependency, stage the browser PDF modules, and run a static server:
 
 ```bash
+npm install --ignore-scripts --omit=optional --package-lock=false --no-audit --no-fund
+npm run vendor
 python -m http.server 8080 --directory site
 ```
 
 Then open `http://localhost:8080`.
 
-Run the full dependency-free quality gate with:
+Run the full quality gate with:
 
 ```bash
 npm run check
@@ -48,9 +54,7 @@ npm run check
 
 ## GitHub Pages deployment
 
-The workflow in `.github/workflows/ci-deploy.yml` deploys `site/` on every successful push to `main`. Pull requests run quality gates but do not deploy.
-
-GitHub Pages is enabled for this repository and the workflow deploys `site/` after every successful push to `main`. GitHub currently reports this repository as public, so the application code and repository documentation are publicly visible; user-entered resume data still remains local to the browser unless the user exports it.
+The workflow in `.github/workflows/ci-deploy.yml` stages PDF.js, runs regression gates, and deploys `site/` on every successful push to `main`. Pull requests run quality gates but do not deploy.
 
 Production URL:
 
@@ -67,4 +71,4 @@ Production URL:
 
 ## Privacy
 
-Resume data is personal information. BespokeCV stores it in browser local storage; GitHub receives only the application code and deployment assets. Exported JSON backups contain the user's entered resume and target-job content and should be handled accordingly.
+Resume data is personal information. BespokeCV stores editable data and imported source text in browser local storage; GitHub receives only the application code and deployment assets. Exported JSON backups contain the user's entered/imported resume and target-job content and should be handled accordingly.
