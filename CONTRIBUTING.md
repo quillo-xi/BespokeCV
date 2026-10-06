@@ -8,13 +8,15 @@ Suggested branch names: `feat/...`, `fix/...`, `docs/...`, `chore/...`.
 
 ## Required checks
 
-Run:
+Install/stage the pinned PDF parser before the full gate:
 
 ```bash
+npm install --ignore-scripts --omit=optional --package-lock=false --no-audit --no-fund
+npm run vendor
 npm run check
 ```
 
-A change is not ready to merge if it breaks the local-first privacy model, single-column resume output, existing exports, or the mobile layout.
+A change is not ready to merge if it breaks the local-first resume privacy model, job-URL safety controls, single-column resume output, existing imports/exports, or the mobile layout.
 
 ## Pull requests
 
@@ -22,4 +24,4 @@ Keep PRs narrow. Describe the user problem, implementation, risk, test coverage,
 
 ## Dependency policy
 
-The baseline application has zero runtime and development package dependencies. Add a dependency only when its value clearly exceeds its security, update, bundle-size, and Actions-cost burden.
+BespokeCV remains framework-free and has one approved build-time browser dependency: Mozilla `pdfjs-dist`, pinned to an exact reviewed version for local PDF extraction. Do not add another dependency unless its value clearly exceeds its security, maintenance, bundle-size, browser-compatibility, and Actions-cost burden. Runtime CDN dependencies are not permitted by default.

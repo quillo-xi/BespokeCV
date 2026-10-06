@@ -72,3 +72,24 @@ Sources:
 A strong resume should answer five questions: Can software parse it? Can retrieval/matching systems find the right qualifications? Is there evidence behind the claims? Can a recruiter understand fit quickly? Can a hiring manager defend the decision to interview?
 
 No resume format, keyword density, or score can guarantee passage through every ATS or a hiring decision.
+
+## Job-posting URL ingestion and platform boundaries — 2026-10-06
+
+Browser code cannot reliably read arbitrary cross-origin pages unless the remote site explicitly permits it through CORS. BespokeCV therefore treats a CORS refusal as a security/compatibility boundary and falls back to user-pasted posting text rather than routing around the protection.
+
+LinkedIn's current User Agreement and API Terms prohibit scraping/copying service content outside permitted interfaces. Indeed's current developer terms similarly restrict scraping and unauthorized integrations. BespokeCV therefore validates and links to LinkedIn/Indeed postings but does not automate extraction from those platforms in the baseline product. Official platform integrations can be evaluated later if access and terms permit the intended use.
+
+Sources:
+- MDN, *Cross-Origin Resource Sharing (CORS) configuration*: https://developer.mozilla.org/en-US/docs/Web/Security/Practical_implementation_guides/CORS
+- MDN, *Reason: CORS header 'Access-Control-Allow-Origin' missing*: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS/Errors/CORSMissingAllowOrigin
+- LinkedIn, *User Agreement*: https://www.linkedin.com/legal/user-agreement
+- LinkedIn, *API Terms of Use*: https://developer.linkedin.com/legal
+- Indeed, *Terms of Service*: https://www.indeed.com/legal
+- Indeed, *Developer Agreement*: https://docs.indeed.com/legal-terms/developer-agreement
+
+## Local PDF parsing
+
+Mozilla PDF.js is a general-purpose web-standards PDF parser. The npm distribution is pinned and copied into the deployed static app during CI so resume PDFs can be parsed locally without sending the document to an external parsing service or loading executable code from a runtime CDN.
+
+Source:
+- `pdfjs-dist` npm package: https://www.npmjs.com/package/pdfjs-dist

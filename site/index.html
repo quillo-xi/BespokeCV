@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#172033">
   <meta name="description" content="BespokeCV is a local-first resume builder and evidence-based ATS readiness analyzer.">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>BespokeCV — Resume Studio</title>
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
@@ -25,15 +25,15 @@
     <div class="header-actions" role="group" aria-label="Document actions">
       <button class="btn ghost" id="installButton" hidden>Install app</button>
       <button class="btn ghost" id="newButton">New</button>
-      <button class="btn ghost" id="importButton">Import</button>
+      <button class="btn ghost" id="importButton">Import resume</button>
       <button class="btn primary" id="exportButton" aria-haspopup="menu" aria-expanded="false">Export</button>
-      <input id="importFile" type="file" accept="application/json,.json" hidden>
+      <input id="importFile" type="file" accept=".docx,.pdf,.txt,.json,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,application/json" hidden>
     </div>
   </header>
 
   <div class="privacy-bar" role="status">
     <span class="privacy-dot" aria-hidden="true"></span>
-    <span><strong>Local-first:</strong> your resume and job description stay in this browser unless you export them.</span>
+    <span><strong>Local-first:</strong> resume files are parsed in this browser. Job-link imports use credential-free HTTPS requests directly to the source page.</span>
     <span id="saveStatus" class="save-status">Ready</span>
   </div>
 

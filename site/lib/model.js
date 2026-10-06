@@ -1,21 +1,49 @@
-export const APP_VERSION = '0.1.0';
+export const APP_VERSION = '0.2.0';
 
 export const createBlankResume = () => ({
-  schemaVersion: 1,
-  profile: { fullName: '', cityState: '', email: '', phone: '', linkedin: '', portfolio: '', headline: '', summary: '' },
+  schemaVersion: 2,
+  profile: {
+    fullName: '',
+    cityState: '',
+    email: '',
+    phone: '',
+    linkedin: '',
+    portfolio: '',
+    headline: '',
+    summary: ''
+  },
   experiences: [createExperience()],
   education: [createEducation()],
   certifications: [],
   skills: [],
-  jobDescription: ''
+  jobDescription: '',
+  jobSourceUrl: '',
+  jobSourceTitle: '',
+  jobSourceCompany: '',
+  importedSource: { fileName: '', format: '', importedAt: '', text: '' }
 });
 
 export function createExperience() {
-  return { id: cryptoSafeId(), title: '', company: '', location: '', start: '', end: '', current: false, bullets: ['', '', ''] };
+  return {
+    id: cryptoSafeId(),
+    title: '',
+    company: '',
+    location: '',
+    start: '',
+    end: '',
+    current: false,
+    bullets: ['', '', '']
+  };
 }
 
 export function createEducation() {
-  return { id: cryptoSafeId(), degree: '', school: '', location: '', graduation: '' };
+  return {
+    id: cryptoSafeId(),
+    degree: '',
+    school: '',
+    location: '',
+    graduation: ''
+  };
 }
 
 export function cryptoSafeId() {
@@ -38,20 +66,51 @@ export function normalizeResume(input) {
       : base.education,
     certifications: Array.isArray(input.certifications) ? input.certifications : [],
     skills: Array.isArray(input.skills) ? input.skills : [],
-    jobDescription: typeof input.jobDescription === 'string' ? input.jobDescription : ''
+    jobDescription: typeof input.jobDescription === 'string' ? input.jobDescription : '',
+    jobSourceUrl: typeof input.jobSourceUrl === 'string' ? input.jobSourceUrl : '',
+    jobSourceTitle: typeof input.jobSourceTitle === 'string' ? input.jobSourceTitle : '',
+    jobSourceCompany: typeof input.jobSourceCompany === 'string' ? input.jobSourceCompany : '',
+    importedSource: { ...base.importedSource, ...(input.importedSource ?? {}) }
   };
 }
 
 export function resumeToPlainText(resume) {
   const p = resume.profile;
-  const lines = [p.fullName,[p.cityState,p.phone,p.email].filter(Boolean).join(' | '),[p.linkedin,p.portfolio].filter(Boolean).join(' | '),p.headline,'','SUMMARY',p.summary,'','SKILLS',resume.skills.filter(Boolean).join(' | '),'','WORK EXPERIENCE'];
+  const lines = [
+    p.fullName,
+    [p.cityState, p.phone, p.email].filter(Boolean).join(' | '),
+    [p.linkedin, p.portfolio].filter(Boolean).join(' | '),
+    p.headline,
+    '',
+    'SUMMARY',
+    p.summary,
+    '',
+    'SKILLS',
+    resume.skills.filter(Boolean).join(' | '),
+    '',
+    'WORK EXPERIENCE'
+  ];
+
   for (const role of resume.experiences) {
-    lines.push('',[role.title,role.company].filter(Boolean).join(' — '),[role.location,[role.start,role.current ? 'Present' : role.end].filter(Boolean).join(' – ')].filter(Boolean).join(' | '),...role.bullets.filter(Boolean).map((bullet) => `• ${bullet}`));
+    lines.push(
+      '',
+      [role.title, role.company].filter(Boolean).join(' — '),
+      [role.location, [role.start, role.current ? 'Present' : role.end].filter(Boolean).join(' – ')].filter(Boolean).join(' | '),
+      ...role.bullets.filter(Boolean).map((bullet) => `• ${bullet}`)
+    );
   }
-  lines.push('','EDUCATION');
+
+  lines.push('', 'EDUCATION');
   for (const education of resume.education) {
-    lines.push([education.degree,education.school].filter(Boolean).join(' — '),[education.location,education.graduation].filter(Boolean).join(' | '));
+    lines.push(
+      [education.degree, education.school].filter(Boolean).join(' — '),
+      [education.location, education.graduation].filter(Boolean).join(' | ')
+    );
   }
-  if (resume.certifications.some(Boolean)) lines.push('','CERTIFICATIONS',...resume.certifications.filter(Boolean));
-  return lines.filter((line,index,all) => !(line === '' && all[index - 1] === '')).join('\n').trim();
+
+  if (resume.certifications.some(Boolean)) {
+    lines.push('', 'CERTIFICATIONS', ...resume.certifications.filter(Boolean));
+  }
+
+  return lines.filter((line, index, all) => !(line === '' && all[index - 1] === '')).join('\n').trim();
 }

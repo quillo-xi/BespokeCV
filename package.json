@@ -1,13 +1,17 @@
 {
   "name": "bespokecv",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "Local-first, evidence-based resume builder and readiness analyzer.",
   "scripts": {
+    "vendor": "node scripts/vendor-pdf.mjs",
     "test": "node --test tests/*.test.mjs",
     "quality": "node scripts/quality.mjs",
     "check": "npm run test && npm run quality"
+  },
+  "devDependencies": {
+    "pdfjs-dist": "6.4.299"
   },
   "engines": {
     "node": ">=22"

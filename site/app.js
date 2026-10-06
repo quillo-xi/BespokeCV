@@ -1,5 +1,7 @@
 import { APP_VERSION, createBlankResume, createEducation, createExperience, normalizeResume } from './lib/model.js';
 import { copyPlainText, downloadBackup, downloadDocx, downloadTxt } from './lib/exporters.js';
+import { importResumeFile, parseResumeText } from './lib/importers.js';
+import { fetchJobPosting } from './lib/job-source.js';
 import { renderResumeEditor } from './ui/editor.js';
 import { renderTargetPanel, renderReviewPanel } from './ui/review.js';
 import { renderPreview } from './ui/preview.js';
@@ -65,6 +67,13 @@ function handleEditorClick(event) {
   const button = event.target.closest('[data-action]');
   if (!button) return;
   const action = button.dataset.action;
+  if (action === 'upload-resume') { $('#importFile').click(); return; }
+  if (action === 'import-pasted-resume') {
+    const text = $('#resumePasteText')?.value?.trim();
+    if (!text) { showToast('Paste resume text first'); return; }
+    applyImportedResume(parseResumeText(text, { fileName: 'Pasted resume text', format: 'text' }), 'Resume text imported');
+    return;
+  }
   if (action === 'add-experience') resume.experiences.push(createExperience());
   if (action === 'remove-experience') resume.experiences.splice(Number(button.dataset.index), 1);
   if (action === 'add-bullet') resume.experiences[Number(button.dataset.index)].bullets.push('');
@@ -73,6 +82,40 @@ function handleEditorClick(event) {
   if (action === 'remove-education') resume.education.splice(Number(button.dataset.index), 1);
   scheduleSave();
   renderAll();
+}
+
+async function handleTargetClick(event) {
+  const button = event.target.closest('[data-action="import-job-url"]');
+  if (!button) return;
+  const url = resume.jobSourceUrl?.trim();
+  if (!url) { showToast('Enter a job-posting URL first'); return; }
+  const original = button.textContent;
+  button.disabled = true;
+  button.textContent = 'Checking…';
+  try {
+    const result = await fetchJobPosting(url);
+    resume.jobSourceUrl = result.url;
+    if (result.restricted) {
+      scheduleSave();
+      renderTargetPanel(resume, targetPanel);
+      showToast(`${result.provider} link validated; paste the posting text`);
+      return;
+    }
+    resume.jobDescription = result.description;
+    resume.jobSourceTitle = result.title;
+    resume.jobSourceCompany = result.company;
+    scheduleSave();
+    renderAll({ editor: false });
+    showToast('Job posting imported safely');
+  } catch (error) {
+    showToast(error?.message || 'Could not import that job posting');
+    renderTargetPanel(resume, targetPanel);
+  } finally {
+    if (button.isConnected) {
+      button.disabled = false;
+      button.textContent = original;
+    }
+  }
 }
 
 function switchMode(mode) {
@@ -89,7 +132,7 @@ function switchMode(mode) {
 function showToast(message) {
   toast.textContent = message;
   toast.hidden = false;
-  setTimeout(() => { toast.hidden = true; }, 2200);
+  setTimeout(() => { toast.hidden = true; }, 3600);
 }
 
 function closeExportMenu() {
@@ -106,15 +149,30 @@ function newResume() {
   showToast('New resume started');
 }
 
-async function importBackup(file) {
+function preserveTargetFields(targetResume) {
+  targetResume.jobDescription = resume.jobDescription;
+  targetResume.jobSourceUrl = resume.jobSourceUrl;
+  targetResume.jobSourceTitle = resume.jobSourceTitle;
+  targetResume.jobSourceCompany = resume.jobSourceCompany;
+  return targetResume;
+}
+
+function applyImportedResume(imported, message, { preserveTarget = true } = {}) {
+  resume = normalizeResume(preserveTarget ? preserveTargetFields(imported) : imported);
+  renderAll();
+  scheduleSave();
+  showToast(message);
+}
+
+async function importFile(file) {
+  const currentLabel = saveStatus.textContent;
+  saveStatus.textContent = `Reading ${file.name} locally…`;
   try {
-    const data = JSON.parse(await file.text());
-    resume = normalizeResume(data);
-    renderAll();
-    scheduleSave();
-    showToast('Backup imported');
-  } catch {
-    showToast('Could not import that BespokeCV backup');
+    const result = await importResumeFile(file);
+    applyImportedResume(result.resume, result.kind === 'backup' ? 'BespokeCV backup imported' : `${file.name} imported — review the draft`, { preserveTarget: result.kind !== 'backup' });
+  } catch (error) {
+    saveStatus.textContent = currentLabel;
+    showToast(error?.message || 'Could not import that resume');
   }
 }
 
@@ -123,6 +181,7 @@ function bindEvents() {
   resumePanel.addEventListener('change', handleInput);
   targetPanel.addEventListener('input', handleInput);
   resumePanel.addEventListener('click', handleEditorClick);
+  targetPanel.addEventListener('click', handleTargetClick);
 
   document.querySelector('.mode-tabs').addEventListener('click', (event) => {
     const button = event.target.closest('[data-mode]');
@@ -139,7 +198,7 @@ function bindEvents() {
   $('#importButton').addEventListener('click', () => $('#importFile').click());
   $('#importFile').addEventListener('change', (event) => {
     const [file] = event.target.files;
-    if (file) importBackup(file);
+    if (file) importFile(file);
     event.target.value = '';
   });
 

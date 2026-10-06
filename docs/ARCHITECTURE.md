@@ -1,18 +1,32 @@
 # Architecture
 
-BespokeCV is a static, local-first Progressive Web App hosted from GitHub Pages. The browser is the data boundary: resume content and pasted job descriptions are stored in local storage and are not sent to GitHub or another API.
+BespokeCV is a local-first Progressive Web App hosted from GitHub Pages. The browser remains the primary data boundary: resume files are parsed locally, extracted resume content is stored in local storage, and no BespokeCV application server receives resume content in the 0.2 baseline.
 
 ## Runtime
 
-- `site/index.html`: semantic application shell.
-- `site/styles.css`: responsive and print styles.
-- `site/app.js`: state and event orchestration.
+- `site/index.html`: semantic application shell and CSP.
+- `site/styles.css`: responsive, intake, review, and print styles.
+- `site/app.js`: state, import, targeting, and event orchestration.
 - `site/ui/`: focused rendering modules.
-- `site/lib/model.js`: schema, normalization, plain-text representation.
+- `site/lib/model.js`: schema, normalization, and plain-text representation.
 - `site/lib/analyzer.js`: transparent local diagnostics and target matching.
+- `site/lib/importers.js`: local DOCX/PDF/TXT/backup ingestion and conservative structure mapping.
+- `site/lib/job-source.js`: validated public job-page retrieval and inert text extraction.
 - `site/lib/docx.js`: dependency-free OOXML/DOCX generation.
 - `site/lib/exporters.js`: client-side exports.
 - `site/sw.js`: network-first service worker with offline fallback.
+
+## Resume document intake
+
+Document attachment is the preferred starting path. DOCX packages are decompressed and read entirely in the browser using web-platform compression streams. PDF text extraction uses a pinned Mozilla PDF.js build copied into `site/vendor/` during CI; the resume file is still processed client-side. TXT and BespokeCV JSON backups are also accepted. Pasted resume text and manual typing remain fallbacks.
+
+Imported document parsing is conservative. BespokeCV stores the extracted source text locally with import metadata so users can compare the generated structured draft against the source. The parser must not invent missing dates, employers, titles, education, credentials, or accomplishments.
+
+## Job-posting URL intake
+
+Job URLs use a browser-only retrieval boundary. `job-source.js` requires HTTPS, rejects embedded credentials, rejects nonstandard ports, blocks localhost/private-network/IP-literal destinations, rejects redirects, omits credentials and referrer data, imposes a timeout and response-size limit, permits only expected text/HTML/JSON content types, and extracts text from inert DOM or JobPosting JSON-LD.
+
+The app never executes fetched scripts or injects fetched markup. Platforms that prohibit automated scraping, including LinkedIn and Indeed in the current reviewed policy set, are validated as outbound links but are not scraped. Users are directed to paste the posting text instead. Cross-origin protections are never bypassed; a CORS failure becomes a safe paste fallback.
 
 ## Availability and updates
 
@@ -20,11 +34,11 @@ CI must pass before deployment. GitHub Pages continues serving the prior success
 
 ## Data and migrations
 
-Schema version 1 stores profile, work experience, education, certifications, skills, and a target job description. JSON backup is the migration/recovery format. Future schema changes must remain backward-readable through `normalizeResume` or include an explicit migration.
+Schema version 2 stores profile, work experience, education, certifications, skills, target-job text/source metadata, and local resume-import source metadata. JSON backup is the migration/recovery format. Future schema changes must remain backward-readable through `normalizeResume` or include an explicit migration.
 
-## Security boundary
+## Dependency boundary
 
-There are no client secrets, external runtime scripts, analytics trackers, cloud databases, or remote AI calls in the baseline. Any future cloud sync or AI integration must be opt-in and separately threat-modeled.
+The application source remains framework-free. PDF.js is the single reviewed build-time browser dependency and is pinned to an exact version. CI stages the two required browser modules into the static site without dependency caching. No external runtime CDN is required.
 
 ## Repository operating model
 
