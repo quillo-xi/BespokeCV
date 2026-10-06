@@ -8,10 +8,10 @@ const AMBIGUOUS_SINGLE = new Set(`quality assurance data research clinical regul
 
 const TECH_SINGLE_TERMS = new Set(`python sql tableau powerbi power-bi excel outlook powerpoint salesforce jira sap epic workday aws azure javascript typescript java c++ c# r matlab sas spss snowflake servicenow github git docker kubernetes terraform`.split(/\s+/));
 
-const ACTION_VERBS = new Set(`achieved accelerated administered advised analyzed automated built launched coached collaborated consolidated created decreased delivered designed developed directed drove eliminated established expanded generated grew implemented improved increased led managed mentored modernized negotiated optimized orchestrated planned produced reduced redesigned resolved saved secured standardized streamlined strengthened supervised transformed upgraded validated won audited coordinated trained maintained monitored prepared supported reviewed verified facilitated oversaw conducted assessed ensured investigated documented reconciled evaluated`.split(/\s+/));
+const ACTION_VERBS = new Set(`achieved accelerated administered advised analyzed automated built launched coached collaborated consolidated created decreased delivered designed developed directed drove eliminated established expanded generated grew implemented improved increased led managed mentored modernized negotiated optimized orchestrated planned produced reduced redesigned resolved saved secured standardized streamlined strengthened supervised transformed upgraded validated won audited coordinated trained maintained monitored prepared supported reviewed verified facilitated oversaw conducted assessed ensured investigated documented reconciled evaluated operated performed calculated utilized assisted answered helped collected researched handled safeguarded filled compounded dispensed accessed processed tested drafted scheduled organized communicated troubleshot repaired configured installed reconciled tracked inventoried presented prepared maintained operates performs calculates utilizes assists answers helps collects researches handles safeguards fills compounds dispenses accesses processes tests drafts schedules organizes communicates repairs configures installs tracks inventories presents operate perform calculate utilize assist answer help collect research handle safeguard fill compound dispense access process test draft schedule organize communicate repair configure install track inventory present manage lead coordinate train supervise review verify facilitate conduct assess ensure investigate document evaluate resolve support advise analyze automate build coach collaborate consolidate create deliver design develop direct establish expand generate implement improve increase mentor modernize negotiate optimize orchestrate plan produce reduce redesign secure standardize streamline strengthen transform upgrade validate audit monitor prepare maintain`.split(/\s+/));
 
 const PRONOUNS = /\b(i|me|my|mine|we|our|ours)\b/i;
-const METRIC_PATTERN = /(?:\$\s?\d|\b\d+(?:\.\d+)?\s?(?:%|percent|x|k|m|b|hours?|days?|weeks?|months?|years?|users?|clients?|sites?|locations?|projects?|cases?|records?|transactions?|people|staff|employees?|leaders?|teams?|workflows?|dashboards?)(?=\s|[.,;:)]|$)|\b(?:increased|decreased|reduced|grew|saved|cut|improved|raised|lowered)\b[^.]{0,30}\b\d+)/i;
+const METRIC_PATTERN = /(?:\$\s?\d|\b\d+(?:\.\d+)?\s?(?:%|percent|x|k|m|b|hours?|days?|weeks?|months?|years?|users?|clients?|sites?|locations?|projects?|cases?|records?|transactions?|people|staff|employees?|leaders?|teams?|workflows?|dashboards?|systems?|tools?|programs?|categories?)(?=\s|[.,;:)]|$)|\b(?:daily|weekly|monthly|quarterly|annually|annual|per\s+(?:day|week|month|quarter|year|shift))\b|\b(?:increased|decreased|reduced|grew|saved|cut|improved|raised|lowered)\b[^.]{0,30}\b\d+)/i;
 
 const REQUIREMENT_SIGNAL = /\b(required|requirements?|must|minimum|at least|certification|certified|license|licensed|degree|years? of|proficiency|expertise|preferred|working knowledge|strong understanding|experience with|experience reviewing|knowledge of)\b/i;
 const PREFERRED_SIGNAL = /\b(preferred|ideally|desired|a plus|nice to have)\b/i;
@@ -376,8 +376,201 @@ function nonEmptyBullets(resume) {
 }
 
 function startsWithActionVerb(bullet) {
-  const first = words(bullet)[0];
-  return Boolean(first && ACTION_VERBS.has(first));
+  const tokens = words(bullet);
+  const first = tokens[0];
+  if (first && ACTION_VERBS.has(first)) return true;
+
+  const labeledLead = String(bullet ?? '').match(/^[^;:]{1,36}[;:]\s*(.+)$/);
+  if (labeledLead) {
+    const next = words(labeledLead[1])[0];
+    if (next && ACTION_VERBS.has(next)) return true;
+  }
+  return false;
+}
+
+function bulletRecords(resume) {
+  return resume.experiences.flatMap((role, roleIndex) =>
+    (role.bullets ?? []).map((bullet, bulletIndex) => ({
+      roleIndex,
+      bulletIndex,
+      roleLabel: [role.title, role.company].filter(Boolean).join(' — ') || `Position ${roleIndex + 1}`,
+      bullet: String(bullet ?? '').trim()
+    }))
+  ).filter((item) => item.bullet);
+}
+
+function sentenceCase(value) {
+  const text = String(value ?? '').trim();
+  return text ? text[0].toUpperCase() + text.slice(1) : '';
+}
+
+function stripTerminalPeriod(value) {
+  return String(value ?? '').trim().replace(/[.]+$/, '');
+}
+
+function rewriteActionOpening(bullet) {
+  const original = String(bullet ?? '').trim();
+  if (!original) return '';
+
+  let match = original.match(/^responsible\s+for\s+(?:the\s+)?accountability\s+and\s+safeguarding\s+of\s+(.+)/i);
+  if (match) return `Safeguarded and maintained accountability for ${stripTerminalPeriod(match[1])}.`;
+
+  match = original.match(/^responsible\s+for\s+(.+)/i);
+  if (match) return `Managed ${stripTerminalPeriod(match[1]).replace(/^the\s+/i, '')}.`;
+
+  match = original.match(/^project\s+lead\s*[;:—-]\s*(.+)/i);
+  if (match) {
+    const rest = stripTerminalPeriod(match[1]);
+    return `${sentenceCase(rest)} as project lead.`;
+  }
+
+  match = original.match(/^provide\s+(?:full[- ]time\s+)?support\s+to\s+(.+)/i);
+  if (match) return `Supported ${stripTerminalPeriod(match[1])}.`;
+
+  match = original.match(/^help(?:ed|s)?\s+(.+)/i);
+  if (match) return `Supported ${stripTerminalPeriod(match[1])}.`;
+
+  match = original.match(/^assist(?:ed|s)?\s+(.+)/i);
+  if (match) return `Supported ${stripTerminalPeriod(match[1])}.`;
+
+  match = original.match(/^answer(?:ed|s)?\s+(.+)/i);
+  if (match) return `Handled ${stripTerminalPeriod(match[1])}.`;
+
+  return '';
+}
+
+function enumerationItems(value) {
+  const text = stripTerminalPeriod(value)
+    .replace(/\s+(?:and|&)\s+/gi, ', ')
+    .replace(/;+/g, ',');
+  const items = text.split(/\s*,\s*/).map((item) => item.trim()).filter(Boolean);
+  if (items.length < 2 || items.length > 6) return [];
+  if (items.some((item) => words(item).length > 7)) return [];
+  return items;
+}
+
+function rewriteWithDerivedMeasure(bullet) {
+  const original = String(bullet ?? '').trim();
+  if (!original || METRIC_PATTERN.test(original)) return null;
+
+  const including = original.match(/\bincluding\s+([^.;]+)([.;]?)$/i);
+  if (including) {
+    const items = enumerationItems(including[1]);
+    if (items.length >= 2) {
+      const prefix = original.slice(0, including.index).trim().replace(/[,:;\s]+$/, '');
+      const list = stripTerminalPeriod(including[1]);
+      return {
+        text: `${prefix}, covering ${items.length} named categories: ${list}.`,
+        derived: `The number ${items.length} comes from the items already listed in the original bullet.`
+      };
+    }
+  }
+
+  return null;
+}
+
+function measurementQuestion(bullet) {
+  const text = String(bullet ?? '').toLowerCase();
+  if (/train|teach|coach|educat|onboard/.test(text)) return 'How many people, sessions, teams, or locations were involved, and how often did you do this?';
+  if (/audit|review|monitor|inspect|test|quality|compliance/.test(text)) return 'How many records, tests, reviews, sites, or checks were involved, and how often?';
+  if (/prepare|compound|fill|dispens|prescription|order/.test(text)) return 'What verified volume or frequency fits this work—for example, preparations, prescriptions, or orders per shift, day, or week?';
+  if (/report|data|query|dashboard|document|record/.test(text)) return 'How often was this produced or reviewed, how many records/reports were involved, or who used the result?';
+  if (/manage|lead|supervis|coordinate|project|team/.test(text)) return 'What was the size of the team, project count, site count, budget, or cadence you can add?';
+  if (/save|improv|reduce|increase|decrease|streamlin|expand|enhance/.test(text)) return 'What before/after result can you verify—time, cost, error rate, throughput, quality, or percentage change?';
+  if (/inventory|equipment|asset|accountab|safeguard/.test(text)) return 'What verified inventory value, asset count, item count, or review frequency can you include?';
+  return 'What count, frequency, time, money, volume, quality, risk, or percentage detail can you verify for this work?';
+}
+
+function buildEvidenceExamples(resume) {
+  const records = bulletRecords(resume);
+  if (!records.length) return [];
+
+  const examples = [];
+  const used = new Set();
+  const add = (item) => {
+    const key = `${item.roleIndex}:${item.bulletIndex}:${item.kind}`;
+    if (used.has(key)) return;
+    used.add(key);
+    examples.push(item);
+  };
+
+  const combined = records.find((item) =>
+    METRIC_PATTERN.test(item.bullet) &&
+    !startsWithActionVerb(item.bullet) &&
+    rewriteActionOpening(item.bullet)
+  );
+  if (combined) {
+    add({
+      ...combined,
+      kind: 'combined',
+      title: 'Turn existing measurable scope into a stronger accomplishment',
+      before: combined.bullet,
+      after: rewriteActionOpening(combined.bullet),
+      criteria: ['Action opening', 'Measurable signal'],
+      note: 'The measurable detail was already present; the rewrite makes the action easier to see.'
+    });
+  }
+
+  const measurable = records.find((item) => !METRIC_PATTERN.test(item.bullet) && rewriteWithDerivedMeasure(item.bullet));
+  if (measurable) {
+    const rewrite = rewriteWithDerivedMeasure(measurable.bullet);
+    add({
+      ...measurable,
+      kind: 'measure',
+      title: 'Make existing scope measurable',
+      before: measurable.bullet,
+      after: rewrite.text,
+      criteria: ['Measurable signal'],
+      note: rewrite.derived
+    });
+  }
+
+  const weakAction = records.find((item) =>
+    !startsWithActionVerb(item.bullet) &&
+    !used.has(`${item.roleIndex}:${item.bulletIndex}:combined`) &&
+    rewriteActionOpening(item.bullet)
+  );
+  if (weakAction) {
+    add({
+      ...weakAction,
+      kind: 'action',
+      title: 'Lead with the action',
+      before: weakAction.bullet,
+      after: rewriteActionOpening(weakAction.bullet),
+      criteria: ['Action opening'],
+      note: 'This keeps the original meaning while moving the work itself to the front.'
+    });
+  }
+
+  const strong = records.find((item) => startsWithActionVerb(item.bullet) && METRIC_PATTERN.test(item.bullet));
+  if (strong && examples.length < 3) {
+    add({
+      ...strong,
+      kind: 'strong',
+      title: 'A bullet already doing both well',
+      before: strong.bullet,
+      after: strong.bullet,
+      criteria: ['Action opening', 'Measurable signal'],
+      note: 'Use this structure as a model for other bullets where similar detail is available.'
+    });
+  }
+
+  if (!examples.some((item) => item.criteria.includes('Measurable signal'))) {
+    const candidate = records.find((item) => !METRIC_PATTERN.test(item.bullet)) ?? records[0];
+    const actionRewrite = rewriteActionOpening(candidate.bullet);
+    add({
+      ...candidate,
+      kind: 'measure-prompt',
+      title: 'Add one concrete measure',
+      before: candidate.bullet,
+      after: actionRewrite || candidate.bullet,
+      criteria: actionRewrite ? ['Action opening'] : [],
+      prompt: measurementQuestion(candidate.bullet),
+      note: 'The resume does not provide a safe number to insert here, so the next step is to add a detail you can confirm.'
+    });
+  }
+
+  return examples.slice(0, 3);
 }
 
 function summaryScore(summary) {
@@ -473,6 +666,7 @@ export function analyzeResume(resume) {
     missingKeywords,
     requirements,
     requirementSignals: extractRequirementSignals(resume.jobDescription),
+    evidenceExamples: buildEvidenceExamples(resume),
     recommendations
   };
 }
