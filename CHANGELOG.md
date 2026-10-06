@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.4 — 2026-10-06
+
+Resume-tailoring Coaching workspace.
+
+- Repurposed the Optimized Draft tab as **Coaching**.
+- Replaced the side-by-side ideal/personalized resume comparison with a practical tailoring workflow organized around what to change first.
+- Added a target-job snapshot showing visible concepts, required-item coverage, and supporting job-description sources.
+- Added prioritized tailoring actions, target-strength/opportunity views, headline and summary starters, skills ordering, role-by-role bullet prioritization, source-informed detail prompts, requirement coaching, and a final application checklist.
+- Simplified requirement states to Covered, Needs detail, and Not shown yet.
+- Reworked coaching language to be more practical and less repetitive about accuracy concerns while keeping one concise accuracy note.
+- Preserved user-curated target concepts and current/previous job-description context throughout the coaching plan.
+- Added regression coverage for coaching priorities, tone, source context, requirement states, and final checklist behavior.
+
+
 ## 0.3.3 — 2026-10-06
 
 Career-evidence intake and source-informed optimization.
