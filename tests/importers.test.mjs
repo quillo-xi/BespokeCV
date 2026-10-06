@@ -32,3 +32,64 @@ test('resume text parser conservatively maps common sections', () => {
   assert.equal(resume.experiences[0].current, true);
   assert.match(resume.importedSource.text, /WORK EXPERIENCE/);
 });
+
+
+test('resume parser removes page artifacts, rejoins wrapped bullets, ignores duration as location, and maps education correctly', () => {
+  const text = `Jordan Taylor
+jordan@example.com | 555-555-0100
+Operations Analyst
+
+SUMMARY
+Operations professional focused on service quality.
+
+WORK EXPERIENCE
+Operations Analyst
+Example Organization
+Apr 2018 - Present (4 years 6 months +)
+• Operate and maintain an automated reporting
+system
+• Led a cross-functional project that improved
+workflow quality
+Front Desk Assistant
+Jordan Taylor - page 1
+Example Services
+Nov 2011 - Apr 2014 (2 years 6 months)
+• Answer phone calls and emails
+
+EDUCATION
+North Coast College
+Associate of Science - AS, Liberal Arts and Sciences
+2020 - 2022
+Learning Platform
+Data Analytics Certificate
+2022 - 2022
+Central High School
+High School Diploma
+Jordan Taylor - page 2
+2000 - 2004
+
+SKILLS
+Data Cleaning • R (Programming
+Language) • Communication
+Jordan Taylor - page 3`;
+
+  const resume = parseResumeText(text, { fileName: 'structured.pdf', format: 'pdf' });
+
+  assert.equal(resume.experiences[0].location, '');
+  assert.equal(resume.experiences[0].bullets[0], 'Operate and maintain an automated reporting system');
+  assert.equal(resume.experiences[0].bullets[1], 'Led a cross-functional project that improved workflow quality');
+  assert.equal(resume.experiences[1].title, 'Front Desk Assistant');
+  assert.equal(resume.experiences[1].company, 'Example Services');
+
+  assert.equal(resume.education.length, 3);
+  assert.equal(resume.education[0].school, 'North Coast College');
+  assert.equal(resume.education[0].degree, 'Associate of Science - AS, Liberal Arts and Sciences');
+  assert.equal(resume.education[0].graduation, '2022');
+  assert.equal(resume.education[2].school, 'Central High School');
+  assert.equal(resume.education[2].degree, 'High School Diploma');
+  assert.equal(resume.education[2].graduation, '2004');
+
+  assert.ok(resume.skills.includes('R (Programming Language)'));
+  assert.equal(resume.skills.some((item) => /page\s+\d+/i.test(item)), false);
+  assert.equal(resume.importedSource.text.includes('Jordan Taylor - page 1'), false);
+});
