@@ -24,7 +24,7 @@ Only HTTPS is accepted. Embedded credentials, private/local/IP-literal destinati
 
 ## Optimized-draft regression checklist
 
-The personalized optimized draft must never incorporate an unsupported target requirement as a user claim. Hypothetical ideal content must remain visibly labeled reference-only. Missing/partial requirements must remain visible as annotations. Target-language chips must suppress redundant single words when a stronger phrase is retained and filter common employment/legal boilerplate.
+The personalized optimized draft must never incorporate an unsupported target requirement as a user claim. Hypothetical ideal content must remain visibly labeled reference-only. Missing/partial requirements must remain visible as annotations. Target-language chips must suppress redundant single words when a stronger concept is retained, filter common employment/legal boilerplate, and reject arbitrary sentence fragments created only by neighboring words. Canonical standards/tools/credentials and repeated meaningful standalone technologies must remain discoverable.
 
 ## Resume-output regression checklist
 

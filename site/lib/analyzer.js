@@ -1,12 +1,12 @@
 import { resumeToPlainText } from './model.js';
 
-const STOPWORDS = new Set(`a an and are as at be been being but by can could did do does for from had has have having he her hers him his how i if in into is it its may might more most must no not of on or our ours should so than that the their theirs them then there these they this those to too up us very was we were what when where which who will with would you your yours including include includes preferred required minimum plus about across after before through using use used role work working job candidate candidates ability abilities responsibilities responsibility qualification qualifications experience experienced years year all under within while any each both other related applicable assigned overall various strong high level well comfortable quickly new current provide providing performs perform position duties duty successful success`.split(/\s+/));
+const STOPWORDS = new Set(`a an and are as at be been being but by can could did do does for from had has have having he her hers him his how i if in into is it its may might more most must no not of on or our ours should so than that the their theirs them then there these they this those to too up us very was we were what when where which who will with would you your yours including include includes preferred required minimum plus about across after before through using use used role work working job candidate candidates ability abilities responsibilities responsibility qualification qualifications experience experienced years year all under within while any each both other related applicable assigned overall various strong high level well comfortable quickly new current provide providing performs perform position duties duty successful success also ensure ensures ensuring knowledge understanding skilled skill skills`.split(/\s+/));
 
-const NOISE_TERMS = new Set(`employment misconduct applicant applicants employer employers opportunity equal consideration conditions authorization sponsorship e-verify race color religion sex sexual gender identity national origin disability veteran accommodation anti-discrimination community workforce salary compensation benefits insurance retirement perk perks category categories application applications university uc uci activities activity`.split(/\s+/));
+const NOISE_TERMS = new Set(`employment misconduct applicant applicants employer employers opportunity equal consideration conditions authorization sponsorship e-verify race color religion sex sexual gender identity national origin disability veteran accommodation anti-discrimination community workforce salary compensation benefits insurance retirement perk perks category categories application applications university uc uci activities activity subject subjects person persons`.split(/\s+/));
 
-const GENERIC_ROLE_WORDS = new Set(`coordinator specialist analyst manager officer assistant supervisor director lead leader staff team member members role position activities activity duties duty responsibilities responsibility studies study`.split(/\s+/));
+const AMBIGUOUS_SINGLE = new Set(`quality assurance data research clinical regulatory monitoring reporting compliance review software computer trial trials action actions process processes documentation submission findings subject`.split(/\s+/));
 
-const AMBIGUOUS_SINGLE = new Set(`quality assurance data research clinical regulatory monitoring reporting compliance subject activities review skills`.split(/\s+/));
+const TECH_SINGLE_TERMS = new Set(`python sql tableau powerbi power-bi excel outlook powerpoint salesforce jira sap epic workday aws azure javascript typescript java c++ c# r matlab sas spss snowflake servicenow github git docker kubernetes terraform`.split(/\s+/));
 
 const ACTION_VERBS = new Set(`achieved accelerated administered advised analyzed automated built launched coached collaborated consolidated created decreased delivered designed developed directed drove eliminated established expanded generated grew implemented improved increased led managed mentored modernized negotiated optimized orchestrated planned produced reduced redesigned resolved saved secured standardized streamlined strengthened supervised transformed upgraded validated won audited coordinated trained maintained monitored prepared supported reviewed verified facilitated oversaw conducted assessed ensured investigated documented reconciled evaluated`.split(/\s+/));
 
@@ -15,8 +15,84 @@ const METRIC_PATTERN = /(?:\$\s?\d|\b\d+(?:\.\d+)?\s?(?:%|percent|x|k|m|b|hours?
 
 const REQUIREMENT_SIGNAL = /\b(required|requirements?|must|minimum|at least|certification|certified|license|licensed|degree|years? of|proficiency|expertise|preferred|working knowledge|strong understanding|experience with|experience reviewing|knowledge of)\b/i;
 const PREFERRED_SIGNAL = /\b(preferred|ideally|desired|a plus|nice to have)\b/i;
-const BOILERPLATE_SENTENCE = /\b(equal opportunity|without regard to|conditions of employment|reasonable accommodation|work authorization|e-verify|salary range|total rewards|benefits may include|consideration for work authorization|anti-discrimination|protected veteran|sexual orientation|gender identity|pre-placement health|background check|misconduct policy)\b/i;
-const HIGH_VALUE = /\b(quality|assurance|compliance|regulatory|audit|auditing|monitor|monitoring|research|clinical|trial|trials|data|capa|corrective|preventive|gcp|ich|fda|pharmacy|drug|safety|integrity|validation|risk|governance|analysis|analytics|software|communication|planning|project|operations|security|finance|engineering|leadership|stakeholder|testing|documentation|reporting|protocol|consent|adverse|microsoft|office|excel|word|powerpoint)\b/i;
+const BOILERPLATE_SENTENCE = /\b(equal opportunity|without regard to|conditions of employment|reasonable accommodation|work authorization|e-verify|salary range|total rewards|benefits may include|consideration for work authorization|anti-discrimination|protected veteran|sexual orientation|gender identity|pre-placement health|background check|misconduct policy|legal right to work|vaccination policies|smoking and tobacco|drug free environment)\b/i;
+
+const CONCEPT_PATTERNS = [
+  concept('quality assurance', /\bquality assurance\b|\bQA\b/i, ['quality assurance', 'qa']),
+  concept('quality control', /\bquality control\b|\bQC\b/i, ['quality control', 'qc']),
+  concept('clinical research', /\bclinical research\b/i),
+  concept('clinical trials', /\bclinical trials?\b/i, ['clinical trial', 'clinical trials']),
+  concept('regulatory compliance', /\bregulatory compliance\b/i),
+  concept('regulatory affairs', /\bregulatory affairs\b/i),
+  concept('data compliance', /\bdata compliance\b/i),
+  concept('data integrity', /\bdata integrity\b/i),
+  concept('protocol compliance', /\bprotocol compliance\b/i),
+  concept('clinical trial data', /\bclinical trial data\b/i),
+  concept('clinical data monitoring', /\bclinical data monitoring\b/i),
+  concept('clinical data reporting', /\bclinical (?:trial )?data[^.;\n]{0,28}\breport(?:ing|s|ed)?\b|\breport(?:ing|s|ed)?[^.;\n]{0,28}\bclinical (?:trial )?data\b/i, ['clinical data reporting', 'clinical trial data reporting', 'clinical trial data reporting findings']),
+  concept('monitoring and auditing', /\bmonitor(?:ing|ed)?\b[^.;\n]{0,28}\baud(?:it|iting|ited)s?\b|\baud(?:it|iting|ited)s?\b[^.;\n]{0,28}\bmonitor(?:ing|ed)?\b/i, ['monitoring auditing', 'monitoring and auditing', 'monitoring or auditing']),
+  concept('internal audits', /\binternal audits?\b/i),
+  concept('external audits', /\bexternal audits?\b/i),
+  concept('audit readiness', /\baudit[- ]ready\b|\baudit readiness\b/i),
+  concept('CAPA', /\bCAPA\b|\bcorrective\s+(?:and|&)\s+preventive\s+actions?\b/i, ['capa', 'corrective and preventive action', 'corrective preventive action']),
+  concept('GCP', /\bGCP\b|\bgood clinical practice(?:s)?\b/i, ['gcp', 'good clinical practice', 'good clinical practices']),
+  concept('ICH guidelines', /\bICH(?:\s+guidelines?)?\b/i, ['ich', 'ich guideline', 'ich guidelines']),
+  concept('FDA-regulated studies', /\bFDA[- ]regulated (?:studies|study|trials?)\b/i, ['fda regulated studies', 'fda regulated study', 'fda regulated trial', 'fda regulated trials']),
+  concept('informed consent', /\binformed consent\b/i),
+  concept('adverse event reporting', /\b(?:serious )?adverse events?\b[^.;\n]{0,24}\breport(?:ing|ed)?\b|\breport(?:ing|ed)?\b[^.;\n]{0,24}\b(?:serious )?adverse events?\b/i, ['adverse event reporting', 'serious adverse event reporting', 'adverse events', 'serious adverse events']),
+  concept('investigational drug review', /\binvestigational drug(?: service)?[^.;\n]{0,24}\breview\b|\bpharmacy record review\b/i, ['investigational drug review', 'investigational drug service', 'pharmacy record review']),
+  concept('electronic medical record review', /\belectronic medical record review\b|\bEMR review\b/i, ['electronic medical record review', 'emr review']),
+  concept('subject eligibility', /\bsubject eligibility\b/i),
+  concept('human-subject research', /\bhuman subjects?\b[^.;\n]{0,20}\b(?:research|clinical trials?)\b/i, ['human subject research', 'human subjects research', 'human subject clinical trials']),
+  concept('SoCRA / ACRP certification', /\bSoCRA\b|\bACRP\b|\bSociety of Clinical Research (?:Associates|Administrators)\b|\bAssociation of Clinical Research Professionals?\b/i, ['socra', 'acrp', 'socra certification', 'acrp certification', 'society of clinical research associates', 'society of clinical research administrators', 'association of clinical research professionals']),
+  concept('clinical research certification', /\bclinical (?:trial|research) professional certification\b|\bprofessional certification[^.;\n]{0,30}\bclinical research\b/i, ['clinical research certification', 'clinical trial professional certification']),
+  concept('cancer research', /\bcancer[- ]related research\b|\bcancer research\b/i, ['cancer research', 'cancer related research']),
+  concept('Microsoft Office', /\bMicrosoft Office\b/i, ['microsoft office']),
+  concept('project management', /\bproject management\b/i),
+  concept('program management', /\bprogram management\b/i),
+  concept('product management', /\bproduct management\b/i),
+  concept('stakeholder management', /\bstakeholder management\b/i),
+  concept('vendor management', /\bvendor management\b/i),
+  concept('change management', /\bchange management\b/i),
+  concept('risk management', /\brisk management\b/i),
+  concept('root cause analysis', /\broot cause analysis\b/i),
+  concept('process improvement', /\bprocess improvement\b/i),
+  concept('continuous improvement', /\bcontinuous improvement\b/i),
+  concept('quality improvement', /\bquality improvement\b/i),
+  concept('data analysis', /\bdata analysis\b/i),
+  concept('data analytics', /\bdata analytics\b/i),
+  concept('data visualization', /\bdata visualization\b/i),
+  concept('business intelligence', /\bbusiness intelligence\b/i),
+  concept('machine learning', /\bmachine learning\b/i),
+  concept('artificial intelligence', /\bartificial intelligence\b/i),
+  concept('software engineering', /\bsoftware engineering\b/i),
+  concept('software development', /\bsoftware development\b/i),
+  concept('cloud computing', /\bcloud computing\b/i),
+  concept('information security', /\binformation security\b/i),
+  concept('cybersecurity', /\bcybersecurity\b/i),
+  concept('customer service', /\bcustomer service\b/i),
+  concept('supply chain', /\bsupply chain\b/i),
+  concept('human resources', /\bhuman resources\b/i),
+  concept('talent acquisition', /\btalent acquisition\b/i),
+  concept('financial analysis', /\bfinancial analysis\b/i),
+  concept('strategic planning', /\bstrategic planning\b/i),
+  concept('standard operating procedures', /\bstandard operating procedures?\b|\bSOPs?\b/i, ['standard operating procedures', 'standard operating procedure', 'sop', 'sops']),
+  concept('interpersonal skills', /\binterpersonal skills?\b/i),
+  concept('communication skills', /\bcommunication skills?\b/i),
+  concept('presentation skills', /\bpresentation skills?\b/i),
+  concept('organizational skills', /\borganizational skills?\b/i),
+  concept('planning skills', /\bplanning skills?\b/i),
+  concept('problem solving', /\bproblem[- ]solving\b|\bsolve complex problems?\b/i, ['problem solving', 'problem-solving']),
+  concept('attention to detail', /\battention to detail\b/i),
+  concept('confidentiality', /\bconfidentiality\b/i),
+  concept('multitasking', /\bmultitask(?:ing)?\b/i)
+];
+
+const ALIASES = new Map(CONCEPT_PATTERNS.map((item) => [item.term.toLowerCase(), item.aliases]));
+
+function concept(term, pattern, aliases = [term]) {
+  return { term, pattern, aliases };
+}
 
 function words(text) {
   return String(text ?? '').toLowerCase().replace(/[’']/g, '').match(/[a-z][a-z0-9+#]*(?:[./-][a-z0-9+#]+)*/g) ?? [];
@@ -32,30 +108,8 @@ function stem(word) {
   return value;
 }
 
-function canonicalPhrase(tokens) {
-  const clean = [...tokens];
-  while (clean.length > 1 && GENERIC_ROLE_WORDS.has(clean.at(-1))) clean.pop();
-  while (clean.length > 1 && STOPWORDS.has(clean[0])) clean.shift();
-  while (clean.length > 1 && STOPWORDS.has(clean.at(-1))) clean.pop();
-  return clean.join(' ');
-}
-
 function meaningfulToken(token) {
-  return token.length > 2 && !STOPWORDS.has(token) && !NOISE_TERMS.has(token) && !GENERIC_ROLE_WORDS.has(token);
-}
-
-function phraseAllowed(tokens) {
-  if (tokens.some((token) => NOISE_TERMS.has(token))) return false;
-  if (!meaningfulToken(tokens[0]) || !meaningfulToken(tokens.at(-1))) return false;
-  const meaningful = tokens.filter(meaningfulToken);
-  return meaningful.length >= Math.min(2, tokens.length);
-}
-
-function candidateScore(term, count, requirementBoost = 0) {
-  const tokenCount = words(term).length;
-  const phraseBonus = tokenCount > 1 ? 2.2 + (tokenCount - 2) * 0.65 : 0;
-  const domainBoost = HIGH_VALUE.test(term) ? 2.2 : 0;
-  return count + phraseBonus + requirementBoost + domainBoost;
+  return token.length > 2 && !STOPWORDS.has(token) && !NOISE_TERMS.has(token);
 }
 
 function significantSentenceList(jobDescription) {
@@ -65,83 +119,94 @@ function significantSentenceList(jobDescription) {
     .filter((value) => value && !BOILERPLATE_SENTENCE.test(value));
 }
 
+function addCandidate(map, term, weight, count = 1, source = 'derived') {
+  const normalized = term.trim();
+  if (!normalized) return;
+  const key = normalized.toLowerCase();
+  const current = map.get(key) ?? { term: normalized, weight: 0, count: 0, source };
+  current.weight += weight;
+  current.count += count;
+  if (source === 'canonical') current.source = 'canonical';
+  map.set(key, current);
+}
+
+function phraseKey(tokens) {
+  return tokens.map(stem).join(' ');
+}
+
+function containsConcept(existing, candidate) {
+  const left = ` ${phraseKey(words(existing))} `;
+  const right = ` ${phraseKey(words(candidate))} `;
+  return left.includes(right) || right.includes(left);
+}
+
 export function extractKeywords(jobDescription, limit = 24) {
+  const sentences = significantSentenceList(jobDescription);
   const candidates = new Map();
-  const add = (term, rawWeight, requirementBoost = 0) => {
-    const normalized = canonicalPhrase(words(term));
-    if (!normalized || NOISE_TERMS.has(normalized) || BOILERPLATE_SENTENCE.test(normalized)) return;
-    const tokenCount = words(normalized).length;
-    if (tokenCount === 1 && !meaningfulToken(normalized)) return;
-    const current = candidates.get(normalized) ?? { count: 0, boost: 0 };
-    current.count += rawWeight;
-    current.boost = Math.max(current.boost, requirementBoost);
-    candidates.set(normalized, current);
-  };
+  const singleCounts = new Map();
+  const bigramCounts = new Map();
 
-  for (const sentence of significantSentenceList(jobDescription)) {
-    const tokens = words(sentence);
-    const requirementBoost = REQUIREMENT_SIGNAL.test(sentence) ? 2.4 : 0;
+  for (const sentence of sentences) {
+    const requirementBoost = REQUIREMENT_SIGNAL.test(sentence) ? 2.2 : 0;
 
-    for (const token of tokens) {
-      if (meaningfulToken(token)) add(token, 1, requirementBoost * 0.35);
+    for (const item of CONCEPT_PATTERNS) {
+      if (item.pattern.test(sentence)) addCandidate(candidates, item.term, 4.5 + requirementBoost, 1, 'canonical');
     }
 
-    for (let size = 2; size <= 4; size += 1) {
-      for (let index = 0; index <= tokens.length - size; index += 1) {
-        const slice = tokens.slice(index, index + size);
-        if (!phraseAllowed(slice)) continue;
-        add(slice.join(' '), 1, requirementBoost);
-      }
+    const tokens = words(sentence);
+    for (const token of tokens) {
+      if (!meaningfulToken(token)) continue;
+      singleCounts.set(token, (singleCounts.get(token) ?? 0) + 1);
+    }
+
+    for (let index = 0; index < tokens.length - 1; index += 1) {
+      const pair = tokens.slice(index, index + 2);
+      if (!pair.every(meaningfulToken)) continue;
+      const key = pair.join(' ');
+      bigramCounts.set(key, (bigramCounts.get(key) ?? 0) + 1);
     }
   }
 
-  let ranked = [...candidates.entries()]
-    .map(([term, meta]) => ({ term, weight: candidateScore(term, meta.count, meta.boost), count: meta.count }))
-    .filter((item) => {
-      const tokenCount = words(item.term).length;
-      if (tokenCount > 1) return true;
-      return item.count >= 2 || HIGH_VALUE.test(item.term);
-    })
-    .sort((a, b) => b.weight - a.weight || words(b.term).length - words(a.term).length || b.term.length - a.term.length);
+  for (const [term, count] of bigramCounts) {
+    if (count < 2) continue;
+    addCandidate(candidates, term, 1.8 * count, count, 'derived');
+  }
 
-  const phraseTerms = ranked.filter((item) => words(item.term).length > 1);
+  for (const [term, count] of singleCounts) {
+    if (count < 2 && !TECH_SINGLE_TERMS.has(term)) continue;
+    if (AMBIGUOUS_SINGLE.has(term)) continue;
+    addCandidate(candidates, term, count + (TECH_SINGLE_TERMS.has(term) ? 2.5 : 0), count, 'single');
+  }
+
+  let ranked = [...candidates.values()]
+    .filter((item) => !NOISE_TERMS.has(item.term.toLowerCase()))
+    .sort((a, b) => b.weight - a.weight || b.count - a.count || words(b.term).length - words(a.term).length);
+
+  const canonical = ranked.filter((item) => item.source === 'canonical');
   ranked = ranked.filter((item) => {
-    if (words(item.term).length > 1) return true;
-    const containingPhrase = phraseTerms.find((phrase) => words(phrase.term).includes(item.term));
-    if (!containingPhrase) return true;
-    if (AMBIGUOUS_SINGLE.has(item.term)) return false;
-    return item.count >= 2;
+    if (item.source === 'canonical') return true;
+    if (words(item.term).length === 1) {
+      return !canonical.some((existing) =>
+        AMBIGUOUS_SINGLE.has(item.term.toLowerCase()) &&
+        words(existing.term).map(stem).includes(stem(item.term))
+      );
+    }
+    return !canonical.some((existing) => containsConcept(existing.term, item.term));
   });
 
   const selected = [];
   for (const item of ranked) {
-    if (selected.some((existing) => existing.term === item.term)) continue;
-    const nestedIndex = selected.findIndex((existing) => {
-      const existingTerm = ` ${existing.term} `;
-      const candidateTerm = ` ${item.term} `;
-      return existingTerm.includes(candidateTerm) || candidateTerm.includes(existingTerm);
-    });
-
+    const nestedIndex = selected.findIndex((existing) => containsConcept(existing.term, item.term));
     if (nestedIndex >= 0) {
       const existing = selected[nestedIndex];
-      const existingTokens = words(existing.term).length;
-      const itemTokens = words(item.term).length;
-
-      if (itemTokens === 1 && !AMBIGUOUS_SINGLE.has(item.term) && item.count >= 2) {
+      if (item.source === 'canonical' && existing.source === 'canonical') {
         selected.push(item);
         if (selected.length >= limit) break;
         continue;
       }
-
-      if (itemTokens >= 2 && itemTokens < existingTokens && item.count >= existing.count * 0.9) {
-        selected[nestedIndex] = item;
-        continue;
-      }
-
-      if (item.weight > existing.weight * 1.28 && itemTokens >= existingTokens) selected[nestedIndex] = item;
+      if (item.source === 'canonical' && existing.source !== 'canonical') selected[nestedIndex] = item;
       continue;
     }
-
     selected.push(item);
     if (selected.length >= limit) break;
   }
@@ -169,15 +234,20 @@ function normalizedStems(text) {
   return words(text).filter((word) => !STOPWORDS.has(word) && !NOISE_TERMS.has(word)).map(stem);
 }
 
-export function textSupportsTerm(text, term) {
+function supportsSequence(text, phrase) {
   const haystack = normalizedStems(text);
-  const needle = normalizedStems(term);
+  const needle = normalizedStems(phrase);
   if (!needle.length) return false;
   if (needle.length === 1) return haystack.includes(needle[0]);
   for (let index = 0; index <= haystack.length - needle.length; index += 1) {
     if (needle.every((token, offset) => haystack[index + offset] === token)) return true;
   }
   return false;
+}
+
+export function textSupportsTerm(text, term) {
+  const aliases = ALIASES.get(String(term).toLowerCase()) ?? [term];
+  return aliases.some((alias) => supportsSequence(text, alias));
 }
 
 function bounded(value) {
