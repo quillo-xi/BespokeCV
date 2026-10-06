@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.2 — 2026-10-06
+
+User-curated target-language coverage.
+
+- Added an Edit concepts toggle to the Readiness Review target-language section.
+- Matched and unrepresented concept chips can be removed from the target set.
+- Added concepts are evaluated against resume evidence and automatically appear as matched or unrepresented.
+- Curated additions/exclusions persist with the resume and are used by both Readiness Review and Optimized Draft.
+- Added Reset curation to restore automatic concept detection.
+- Added regression coverage for persisted exclusions, manual concepts, evidence classification, and optimizer alignment.
+
+
 ## 0.3.1 — 2026-10-06
 
 Target-language precision hotfix.
