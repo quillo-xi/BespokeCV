@@ -1,8 +1,9 @@
-const CACHE_NAME = 'bespokecv-v0.1.0';
+const CACHE_NAME = 'bespokecv-v0.2.0';
 const APP_SHELL = [
   './', './index.html', './styles.css', './app.js', './manifest.webmanifest',
-  './lib/model.js', './lib/analyzer.js', './lib/docx.js', './lib/exporters.js',
+  './lib/model.js', './lib/analyzer.js', './lib/docx.js', './lib/exporters.js', './lib/importers.js', './lib/job-source.js',
   './ui/shared.js', './ui/editor.js', './ui/review.js', './ui/preview.js',
+  './vendor/pdf.mjs', './vendor/pdf.worker.mjs',
   './assets/icon.svg', './assets/icon-192.png', './assets/icon-512.png'
 ];
 
