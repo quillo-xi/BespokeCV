@@ -258,7 +258,8 @@ function roleSourceSuggestions(role, sources, targetTerms) {
   for (const source of likely) {
     for (const sentence of source.sentences) {
       const matched = matchedTermsForText(sentence, targetTerms, 3);
-      if (!matched.length) continue;
+      if (!matched.length && targetTerms.length) continue;
+      if (!matched.length && !/(?:responsib|manage|review|audit|train|support|prepare|maintain|coordinate|lead|supervis|system|standard|policy|quality|report|data)/i.test(sentence)) continue;
       suggestions.push({
         label: source.label,
         text: sentence,
@@ -329,7 +330,8 @@ function buildPriorityActions(resume, targetTitle, supportedTerms, missingTerms,
   const headline = resume.profile.headline?.trim();
   const targetInHeadline = targetTitle && targetTitle !== 'Target role' && headline && headline.toLowerCase().includes(targetTitle.toLowerCase());
 
-  if (!headline || !targetInHeadline) {
+  const hasSpecificTarget = targetTitle && targetTitle !== 'Target role';
+  if (!headline || (hasSpecificTarget && !targetInHeadline)) {
     actions.push({
       priority: 'high',
       title: 'Tune the top of the resume',
@@ -386,9 +388,11 @@ function buildPriorityActions(resume, targetTitle, supportedTerms, missingTerms,
   return actions.slice(0, 5);
 }
 
-function finalChecklist(resume, requirementReview, experiences, supportedTerms, quality) {
+function finalChecklist(resume, requirementReview, experiences, supportedTerms, quality, hasTarget) {
   const requiredOpen = requirementReview.filter((item) => item.type === 'required' && item.status !== 'covered').length;
-  const hasRelevantBullet = experiences.some((role) => role.bullets.some((item) => item.score > 0));
+  const hasRelevantBullet = hasTarget
+    ? experiences.some((role) => role.bullets.some((item) => item.score > 0))
+    : quality.signalCounts.strong > 0;
   return [
     {
       done: Boolean(resume.profile.headline?.trim()),
@@ -400,7 +404,9 @@ function finalChecklist(resume, requirementReview, experiences, supportedTerms, 
     },
     {
       done: hasRelevantBullet,
-      text: 'Most relevant accomplishments appear near the top of each applicable role.'
+      text: hasTarget
+        ? 'Most relevant accomplishments appear near the top of each applicable role.'
+        : 'The strongest accomplishments are easy to find within work experience.'
     },
     {
       done: requiredOpen === 0,
@@ -553,7 +559,7 @@ export function buildCoachingPlan(resume) {
         matchedTerms: targetTerms.filter((item) => textSupportsTerm(source.text, item.term)).slice(0, 8).map((item) => item.term)
       })).filter((source) => source.matchedTerms.length)
     },
-    checklist: finalChecklist(resume, requirementReview, experiences, supportedTerms, quality)
+    checklist: finalChecklist(resume, requirementReview, experiences, supportedTerms, quality, Boolean(resume.jobDescription.trim()))
   };
 }
 
