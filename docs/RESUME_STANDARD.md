@@ -20,13 +20,13 @@ Use a common professional font, consistent spacing, simple bullets, and visible 
 
 ## Accomplishment model
 
-Prefer **action + scope/context + evidence/result**. Strong evidence can be percentage, money, volume, time, quality, risk reduction, geographic or organizational scope, throughput, frequency, team size, portfolio size, or another truthful measure. Not every bullet needs a number; every bullet should demonstrate capability, scope, or impact.
+Prefer **clear action + useful context + evidence/result where available**. Strong context may come from scale, frequency, organizational breadth, a governing standard, a recognizable system/tool, ownership, audience, complexity/risk, or the outcome of the work. Numbers are valuable when they communicate real scale or results, but they are not a requirement for every bullet. A specialized or regulated responsibility can be compelling without a metric when the reader can clearly understand the capability and level of responsibility.
 
 ## Tailoring
 
 Use the employer's terminology when it accurately describes the candidate's experience. Spell out uncommon acronyms on first use. Put important skills in experience context, not only in a keyword list. Address required qualifications explicitly when genuinely met.
 
-Do not use hidden keyword stuffing or add titles, tools, metrics, education, or credentials that are not part of the candidate’s background. Tailoring should change emphasis, order, specificity, and wording—not the underlying history.
+Do not use hidden keyword stuffing or add titles, tools, metrics, education, or credentials that are not part of the candidate’s background. Tailoring should change emphasis, order, specificity, and wording—not the underlying history. Prioritize bullets that are both relevant to the target and rich in useful evidence; do not promote weak keyword matches above stronger, more persuasive accomplishments solely because they contain a target term.
 
 Supporting job descriptions, duty statements, and role summaries can help recover useful terminology and responsibility context. Use them to prompt specific details, then add the candidate’s own scope, frequency, decisions, and outcomes where applicable.
 
