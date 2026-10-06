@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bespokecv-v0.3.3';
+const CACHE_NAME = 'bespokecv-v0.3.4';
 const APP_SHELL = [
   './', './index.html', './styles.css', './app.js', './manifest.webmanifest',
   './lib/model.js', './lib/analyzer.js', './lib/optimizer.js', './lib/docx.js', './lib/exporters.js', './lib/importers.js', './lib/job-source.js',
