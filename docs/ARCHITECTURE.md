@@ -28,6 +28,10 @@ Job URLs use a browser-only retrieval boundary. `job-source.js` requires HTTPS, 
 
 The app never executes fetched scripts or injects fetched markup. Platforms that prohibit automated scraping, including LinkedIn and Indeed in the current reviewed policy set, are validated as outbound links but are not scraped. Users are directed to paste the posting text instead. Cross-origin protections are never bypassed; a CORS failure becomes a safe paste fallback.
 
+## Target-concept curation
+
+Resume schema version 3 stores `targetConceptOverrides.added` and `targetConceptOverrides.excluded`. Automatic job-posting concepts remain reproducible from the source posting; user curation is stored separately so the original posting text is never rewritten. Readiness Review and Optimized Draft resolve the same combined target set.
+
 ## Optimized-draft boundary
 
 The optimized workspace is entirely local and deterministic. It may reorganize existing bullets by relevance and suggest target terminology only when evidence is found in the loaded resume. The hypothetical ideal blueprint is explicitly labeled reference-only. Requirements without adequate resume evidence remain annotated as gaps or items requiring manual verification; the optimizer must never invent credentials, degrees, years of experience, tools, metrics, or regulated-domain experience.

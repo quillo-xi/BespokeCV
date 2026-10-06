@@ -18,6 +18,7 @@ const saveStatus = $('#saveStatus');
 const toast = $('#toast');
 let deferredInstallPrompt = null;
 let saveTimer = null;
+let targetConceptEditMode = false;
 let resume = loadResume();
 
 function loadResume() {
@@ -46,11 +47,15 @@ function setByPath(path, value) {
   target[parts.at(-1)] = value;
 }
 
+function renderReview() {
+  renderReviewPanel(resume, reviewPanel, { editConcepts: targetConceptEditMode });
+}
+
 function renderAll({ editor = true } = {}) {
   if (editor) renderResumeEditor(resume, resumePanel);
   renderTargetPanel(resume, targetPanel);
   renderOptimizedPanel(resume, optimizedPanel);
-  renderReviewPanel(resume, reviewPanel);
+  renderReview();
   renderPreview(resume, preview);
 }
 
@@ -64,7 +69,7 @@ function handleInput(event) {
   scheduleSave();
   renderPreview(resume, preview);
   renderOptimizedPanel(resume, optimizedPanel);
-  renderReviewPanel(resume, reviewPanel);
+  renderReview();
 }
 
 function handleEditorClick(event) {
@@ -122,6 +127,77 @@ async function handleTargetClick(event) {
   }
 }
 
+function ensureConceptOverrides() {
+  if (!resume.targetConceptOverrides || typeof resume.targetConceptOverrides !== 'object') {
+    resume.targetConceptOverrides = { added: [], excluded: [] };
+  }
+  if (!Array.isArray(resume.targetConceptOverrides.added)) resume.targetConceptOverrides.added = [];
+  if (!Array.isArray(resume.targetConceptOverrides.excluded)) resume.targetConceptOverrides.excluded = [];
+  return resume.targetConceptOverrides;
+}
+
+function conceptKey(value) {
+  return String(value ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+function rerenderConceptSurfaces() {
+  renderOptimizedPanel(resume, optimizedPanel);
+  renderReview();
+}
+
+function handleReviewClick(event) {
+  const button = event.target.closest('[data-action]');
+  if (!button) return;
+  const action = button.dataset.action;
+
+  if (action === 'toggle-concept-edit') {
+    targetConceptEditMode = !targetConceptEditMode;
+    renderReview();
+    return;
+  }
+
+  const overrides = ensureConceptOverrides();
+
+  if (action === 'remove-target-concept') {
+    const term = String(button.dataset.term ?? '').trim();
+    if (!term) return;
+    const key = conceptKey(term);
+    overrides.added = overrides.added.filter((item) => conceptKey(item) !== key);
+    if (!overrides.excluded.some((item) => conceptKey(item) === key)) overrides.excluded.push(term);
+    scheduleSave();
+    rerenderConceptSurfaces();
+    showToast(`${term} removed from target concepts`);
+    return;
+  }
+
+  if (action === 'reset-target-concepts') {
+    overrides.added = [];
+    overrides.excluded = [];
+    scheduleSave();
+    rerenderConceptSurfaces();
+    showToast('Target concepts reset to automatic detection');
+  }
+}
+
+function handleReviewSubmit(event) {
+  const form = event.target.closest('[data-form="add-target-concept"]');
+  if (!form) return;
+  event.preventDefault();
+  const input = form.querySelector('input[name="targetConcept"]');
+  const term = String(input?.value ?? '').replace(/\s+/g, ' ').trim();
+  if (term.length < 2) { showToast('Enter a concept first'); return; }
+  if (term.length > 80) { showToast('Keep target concepts to 80 characters or fewer'); return; }
+
+  const overrides = ensureConceptOverrides();
+  const key = conceptKey(term);
+  overrides.excluded = overrides.excluded.filter((item) => conceptKey(item) !== key);
+  if (!overrides.added.some((item) => conceptKey(item) === key)) overrides.added.push(term);
+
+  scheduleSave();
+  rerenderConceptSurfaces();
+  showToast(`${term} added to target concepts`);
+}
+
 function switchMode(mode) {
   for (const button of document.querySelectorAll('.mode-tab[data-mode]')) {
     const active = button.dataset.mode === mode;
@@ -149,6 +225,7 @@ function closeExportMenu() {
 function newResume() {
   if (!confirm('Start a new resume? Export a BespokeCV backup first if you want to keep the current version.')) return;
   resume = createBlankResume();
+  targetConceptEditMode = false;
   localStorage.removeItem(STORAGE_KEY);
   renderAll();
   scheduleSave();
@@ -160,6 +237,10 @@ function preserveTargetFields(targetResume) {
   targetResume.jobSourceUrl = resume.jobSourceUrl;
   targetResume.jobSourceTitle = resume.jobSourceTitle;
   targetResume.jobSourceCompany = resume.jobSourceCompany;
+  targetResume.targetConceptOverrides = {
+    added: [...(resume.targetConceptOverrides?.added ?? [])],
+    excluded: [...(resume.targetConceptOverrides?.excluded ?? [])]
+  };
   return targetResume;
 }
 
@@ -188,6 +269,8 @@ function bindEvents() {
   targetPanel.addEventListener('input', handleInput);
   resumePanel.addEventListener('click', handleEditorClick);
   targetPanel.addEventListener('click', handleTargetClick);
+  reviewPanel.addEventListener('click', handleReviewClick);
+  reviewPanel.addEventListener('submit', handleReviewSubmit);
 
   document.querySelector('.mode-tabs').addEventListener('click', (event) => {
     const button = event.target.closest('[data-mode]');

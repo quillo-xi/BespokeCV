@@ -1,4 +1,4 @@
-import { extractKeywords, extractRequirementSignals, textSupportsTerm } from './analyzer.js';
+import { extractKeywords, extractRequirementSignals, resolveTargetConcepts, textSupportsTerm } from './analyzer.js';
 import { resumeToPlainText } from './model.js';
 
 function listJoin(items) {
@@ -124,7 +124,7 @@ function idealSummary(targetTitle, targetTerms, requirements) {
 export function buildOptimizedDraft(resume) {
   const targetTitle = inferTargetTitle(resume);
   const company = resume.jobSourceCompany?.trim() || '';
-  const targetTerms = extractKeywords(resume.jobDescription, 28);
+  const targetTerms = resolveTargetConcepts(resume.jobDescription, resume.targetConceptOverrides, 28);
   const requirements = extractRequirementSignals(resume.jobDescription, 24);
   const entries = evidenceEntries(resume);
   const resumeText = resumeToPlainText(resume);

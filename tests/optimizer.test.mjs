@@ -36,3 +36,20 @@ Preferred: SoCRA or ACRP certification.
   assert.ok(draft.requirements.some((item) => /SoCRA/i.test(item.text) && item.type === 'preferred'));
   assert.ok(draft.personalized.experiences[0].bullets[0].score >= draft.personalized.experiences[0].bullets.at(-1).score);
 });
+
+
+test('optimized draft honors curated target concepts', () => {
+  const resume = createBlankResume();
+  resume.profile.fullName = 'Alex Morgan';
+  resume.skills = ['Vendor Oversight'];
+  resume.jobDescription = 'Quality assurance and regulatory compliance required.';
+  resume.targetConceptOverrides = {
+    added: ['vendor oversight'],
+    excluded: ['regulatory compliance']
+  };
+
+  const draft = buildOptimizedDraft(resume);
+  const terms = draft.targetTerms.map((item) => item.term.toLowerCase());
+  assert.ok(terms.includes('vendor oversight'));
+  assert.equal(terms.includes('regulatory compliance'), false);
+});

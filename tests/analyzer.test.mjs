@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { analyzeResume, extractKeywords, extractRequirements } from '../site/lib/analyzer.js';
+import { analyzeResume, extractKeywords, extractRequirements, resolveTargetConcepts } from '../site/lib/analyzer.js';
 import { createBlankResume, resumeToPlainText } from '../site/lib/model.js';
 
 test('extractKeywords prioritizes repeated meaningful terms and drops common words', () => {
@@ -116,4 +116,34 @@ Preferred: Clinical Trial Professional certification.
     'knowledge computer',
     'highly complex'
   ]) assert.equal(terms.includes(fragment), false, `sentence fragment leaked: ${fragment}`);
+});
+
+
+test('target concept curation excludes detected concepts and adds user concepts', () => {
+  const posting = 'Quality assurance and regulatory compliance required. Risk management preferred.';
+  const concepts = resolveTargetConcepts(posting, {
+    excluded: ['regulatory compliance'],
+    added: ['vendor oversight']
+  }, 20);
+
+  const terms = concepts.map((item) => item.term.toLowerCase());
+  assert.ok(terms.includes('quality assurance'));
+  assert.ok(terms.includes('vendor oversight'));
+  assert.equal(terms.includes('regulatory compliance'), false);
+  assert.equal(concepts.find((item) => item.term.toLowerCase() === 'vendor oversight')?.source, 'manual');
+});
+
+test('readiness analysis classifies a user-added concept against resume evidence', () => {
+  const resume = createBlankResume();
+  resume.profile.fullName = 'Alex Morgan';
+  resume.profile.email = 'alex@example.com';
+  resume.profile.phone = '555-0100';
+  resume.skills = ['Vendor Oversight'];
+  resume.jobDescription = 'Quality assurance required.';
+  resume.targetConceptOverrides = { added: ['vendor oversight'], excluded: ['quality assurance'] };
+
+  const result = analyzeResume(resume);
+  assert.ok(result.matchedKeywords.some((item) => item.term.toLowerCase() === 'vendor oversight'));
+  assert.equal(result.matchedKeywords.some((item) => item.term.toLowerCase() === 'quality assurance'), false);
+  assert.equal(result.missingKeywords.some((item) => item.term.toLowerCase() === 'quality assurance'), false);
 });

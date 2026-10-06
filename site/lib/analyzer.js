@@ -214,6 +214,29 @@ export function extractKeywords(jobDescription, limit = 24) {
   return selected.map(({ term, weight }) => ({ term, weight }));
 }
 
+export function resolveTargetConcepts(jobDescription, overrides = {}, limit = 24) {
+  const excluded = new Set((Array.isArray(overrides.excluded) ? overrides.excluded : []).map((term) => String(term).trim().toLowerCase()).filter(Boolean));
+  const added = (Array.isArray(overrides.added) ? overrides.added : [])
+    .map((term) => String(term).replace(/\s+/g, ' ').trim())
+    .filter((term) => term.length >= 2 && term.length <= 80);
+
+  const automatic = extractKeywords(jobDescription, Math.max(limit + excluded.size + added.length, 32))
+    .filter((item) => !excluded.has(item.term.toLowerCase()))
+    .map((item) => ({ ...item, source: 'automatic' }));
+
+  const byTerm = new Map(automatic.map((item) => [item.term.toLowerCase(), item]));
+  for (const term of added) {
+    const key = term.toLowerCase();
+    if (excluded.has(key)) continue;
+    const existing = byTerm.get(key);
+    byTerm.set(key, existing ? { ...existing, source: 'manual' } : { term, weight: 6.5, source: 'manual' });
+  }
+
+  return [...byTerm.values()]
+    .sort((a, b) => (b.source === 'manual') - (a.source === 'manual') || b.weight - a.weight)
+    .slice(0, limit);
+}
+
 export function extractRequirementSignals(jobDescription, limit = 18) {
   const results = [];
   for (const sentence of significantSentenceList(jobDescription)) {
@@ -281,7 +304,7 @@ function bulletLengthScore(bullet) {
 export function analyzeResume(resume) {
   const text = resumeToPlainText(resume);
   const bullets = nonEmptyBullets(resume);
-  const jobKeywords = extractKeywords(resume.jobDescription);
+  const jobKeywords = resolveTargetConcepts(resume.jobDescription, resume.targetConceptOverrides);
   const requirements = extractRequirements(resume.jobDescription);
 
   const matchedKeywords = jobKeywords.filter(({ term }) => textSupportsTerm(text, term));
