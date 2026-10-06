@@ -131,6 +131,49 @@ test('coaching recognizes a state professional license from Certifications even 
   ));
 });
 
+test('coaching and requirement parsing agree on a structured pharmacy posting with upon-hire timing', () => {
+  const resume = createBlankResume();
+  resume.profile.fullName = 'Alex Morgan';
+  resume.education = [{
+    ...resume.education[0],
+    school: 'Example College',
+    degree: 'Associate of Science'
+  }];
+  resume.certifications = [
+    'Pharmacy Technician - California State Board of Pharmacy',
+    'License TCH 147938'
+  ];
+  resume.jobDescription = `
+Description
+
+Providence caregivers are not simply valued. Your voice matters here, because we know that to inspire and retain the best people, we must empower them.
+
+Required Qualifications
+
+Education to meet certification, license or registration requirement.
+Upon hire: California Pharmacy Technician License.
+Upon hire: Certified in Chemotherapy Preparation through ministry specific certification program.
+
+Why Join Providence?
+
+Benefits information.
+`;
+
+  const plan = buildCoachingPlan(resume);
+
+  assert.equal(plan.requirements.length, 3);
+  assert.equal(plan.requirements.some((item) => /Your voice matters|Required Qualifications/i.test(item.text)), false);
+
+  const license = plan.requirements.find((item) => /California Pharmacy Technician License/i.test(item.text));
+  assert.ok(license);
+  assert.equal(license.status, 'covered');
+  assert.equal(license.timing, 'Upon hire');
+
+  const education = plan.requirements.find((item) => /Education to meet certification/i.test(item.text));
+  assert.ok(education);
+  assert.equal(education.status, 'covered');
+});
+
 test('credential matching does not confuse a related occupation with the required licensed profession', () => {
   const resume = createBlankResume();
   resume.certifications = [
