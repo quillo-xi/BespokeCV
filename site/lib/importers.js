@@ -90,7 +90,7 @@ export async function extractPdfText(fileOrBuffer) {
   try {
     pdfjs = await import('../vendor/pdf.mjs');
   } catch {
-    throw new Error('PDF support is not available in this build. Try Word (.docx) or paste the resume text.');
+    throw new Error('PDF support is not available in this build. Try Word (.docx) or paste the text instead.');
   }
   pdfjs.GlobalWorkerOptions.workerSrc = new URL('../vendor/pdf.worker.mjs', import.meta.url).href;
   const task = pdfjs.getDocument({ data: new Uint8Array(data), isEvalSupported: false, useWorkerFetch: false });
@@ -401,6 +401,36 @@ export function parseResumeText(text, source = {}) {
     text: normalizedText
   };
   return normalizeResume(resume);
+}
+
+export async function importSupportingDocument(file) {
+  if (!(file instanceof Blob)) throw new Error('Choose a document to import.');
+  if (file.size > MAX_RESUME_BYTES) throw new Error('Supporting documents are limited to 12 MB for local processing.');
+  const name = file.name ?? 'supporting-document';
+  const lower = name.toLowerCase();
+  let text;
+  let format;
+
+  if (lower.endsWith('.docx') || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    text = await extractDocxText(file);
+    format = 'docx';
+  } else if (lower.endsWith('.pdf') || file.type === 'application/pdf') {
+    text = await extractPdfText(file);
+    format = 'pdf';
+  } else if (lower.endsWith('.txt') || file.type === 'text/plain') {
+    text = normalizeExtractedText(await file.text());
+    format = 'text';
+  } else {
+    throw new Error('Use a Word (.docx), PDF (.pdf), or text (.txt) document.');
+  }
+
+  if (text.length < 20) throw new Error('Very little readable text was found. Try another file format or paste the job-description text.');
+  return {
+    fileName: name,
+    format,
+    text,
+    importedAt: new Date().toISOString()
+  };
 }
 
 export async function importResumeFile(file) {
