@@ -4,7 +4,7 @@
 
 Every pull request and push to `main` stages the pinned PDF.js assets and runs `npm run check`. The gate covers unit tests, JavaScript syntax, required files, version consistency, PWA configuration, security/accessibility shell markers, safe job-URL controls, PDF.js pinning, and a core source-size budget.
 
-Unit coverage includes phrase-aware target extraction, nested-term de-duplication, boilerplate filtering, requirement extraction, coaching-plan requirement and prioritization behavior, scoring behavior, standard linearized resume headings, DOCX package generation, DOCX text extraction, conservative resume-text mapping, and job-URL validation/restricted-source behavior.
+Unit coverage includes phrase-aware target extraction, nested-term de-duplication, boilerplate filtering, structured requirement extraction, multidimensional bullet/evidence assessment, date/tense/repetition/duplicate checks, general and target-specific coaching behavior, scoring behavior, standard linearized resume headings, DOCX package generation, DOCX text extraction, conservative resume-text mapping, and job-URL validation/restricted-source behavior.
 
 The UI gate also rejects reintroduction of helper/example text tied to a specific Clinical Quality Coordinator / Pharmacy Technician / sterile-compounding background.
 
@@ -28,7 +28,7 @@ Only HTTPS is accepted. Embedded credentials, private/local/IP-literal destinati
 
 ## Coaching regression checklist
 
-Coaching must produce a target-specific plan rather than a generic replacement resume. The workspace should show prioritized changes, headline/summary guidance, skill ordering, work-experience relevance, requirement coaching, source-informed prompts, and a final checklist. Requirement states are limited to Covered, Needs detail, and Not shown yet. Requirement extraction must respect qualification-section headings, exclude headings/culture/benefits copy, and separate timing prefixes such as `Upon hire` from the requirement text. Readiness Review and Coaching must use the same structured requirement set and coverage status. Credential requirements must inspect Certifications as the primary credential source and tolerate equivalent profession/jurisdiction/issuing-body wording without confusing adjacent professions. Supporting job-description context must never move a requirement to Covered by itself. User-curated concept exclusions/additions must remain aligned between Readiness Review and Coaching.
+Coaching must remain useful both with and without a target posting. With a target, it must produce a target-specific plan rather than a generic replacement resume. The workspace should show prioritized changes, headline/summary guidance, skill ordering, work-experience relevance, requirement coaching, source-informed prompts, and a final checklist. Requirement states are limited to Covered, Needs detail, and Not shown yet. Requirement extraction must respect qualification-section headings, exclude headings/culture/benefits copy, and separate timing prefixes such as `Upon hire` from the requirement text. Readiness Review and Coaching must use the same structured requirement set and coverage status. Credential requirements must inspect Certifications as the primary credential source and tolerate equivalent profession/jurisdiction/issuing-body wording without confusing adjacent professions. Supporting job-description context must never move a requirement to Covered by itself. User-curated concept exclusions/additions must remain aligned between Readiness Review and Coaching.
 
 User-facing coaching copy should stay practical and plain-language. Repeated warning language such as “fabricated,” “truthful,” “evidence gap,” or “never auto-filled” should not return to the Coaching UI; one concise accuracy note is sufficient.
 
@@ -41,6 +41,10 @@ Contact information must remain in the document body. Output must remain one log
 Production deploys only after quality passes. If a deployment fails, the prior successful Pages deployment remains the baseline. Revert the offending commit or correct it through a short-lived fix branch.
 
 
-## Evidence diagnostic examples
+## Evidence and bullet-quality diagnostics
 
-Evidence diagnostics must recognize common resume action verbs and simple third-person inflections without requiring an artificially narrow verb list. Resume-specific examples must be built from actual accomplishment bullets. Rewrites may reorganize wording or derive a count from items explicitly listed in the source bullet, but they must not invent quantities. If no usable measure is present, the UI should ask a specific measurement question instead of inserting a placeholder number. At least one regression case must protect a combined action+metric rewrite and one must protect the no-number fallback.
+Evidence diagnostics must recognize common resume action verbs and must not define strong writing as “action verb + number.” The review engine should recognize useful evidence through scale, frequency, outcome, standards, tools/systems, ownership, complexity/risk, and audience/collaboration. Resume-specific examples must be built from actual accomplishment bullets.
+
+Safe rewrites may reorganize wording only when the original meaning can be preserved with high confidence. They must not manufacture quantities, outcomes, ownership, standards, or scope. Enumerating nouns already listed in a bullet is not, by itself, a meaningful metric and must not be converted into one. If useful context is missing, the UI should ask a specific question instead of inserting a placeholder number.
+
+Consistency checks should cover obvious date conflicts, past-role present-tense patterns, repeated openers, very similar bullets, duplicate skills, and generic summary clichés without presenting those heuristics as hiring rules.
