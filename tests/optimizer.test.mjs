@@ -53,3 +53,42 @@ test('optimized draft honors curated target concepts', () => {
   assert.ok(terms.includes('vendor oversight'));
   assert.equal(terms.includes('regulatory compliance'), false);
 });
+
+
+test('supporting job descriptions make coaching specific without becoming accomplishment evidence', () => {
+  const resume = createBlankResume();
+  resume.profile.fullName = 'Alex Morgan';
+  resume.experiences[0] = {
+    ...resume.experiences[0],
+    title: 'Operations Manager',
+    company: 'Example Organization',
+    start: '2022',
+    current: true,
+    bullets: ['Coordinated weekly operational reporting for department leadership.']
+  };
+  resume.jobDescription = `
+Required: quality assurance and regulatory compliance experience.
+Required: monitoring and auditing experience.
+`;
+  resume.careerSources = [{
+    id: 'source-1',
+    label: 'Operations Manager — Example Organization',
+    fileName: 'role-description.txt',
+    fileFormat: 'text',
+    importedAt: '2026-10-06T00:00:00.000Z',
+    text: '',
+    fileText: 'Operations Manager responsibilities include conducting internal audits against documented compliance procedures and coordinating corrective follow-up with regional teams.'
+  }];
+
+  const draft = buildOptimizedDraft(resume);
+  const auditRequirement = draft.requirements.find((item) => /monitoring and auditing/i.test(item.text));
+
+  assert.equal(draft.careerContext.sourceCount, 1);
+  assert.ok(draft.careerContext.alignedSources.length >= 1);
+  assert.ok(draft.personalized.experiences[0].sourceSuggestions.length >= 1);
+  assert.ok(auditRequirement);
+  assert.notEqual(auditRequirement.status, 'supported');
+  assert.ok(auditRequirement.sourceContext.length >= 1);
+  assert.match(auditRequirement.comment, /supporting job-description source/i);
+  assert.equal(draft.idealReference.bullets.some((item) => /\[(?:scope|process|standard|tool)/i.test(item)), false);
+});
