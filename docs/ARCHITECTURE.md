@@ -39,6 +39,10 @@ The app never executes fetched scripts or injects fetched markup. Platforms that
 
 Resume schema version 4 stores `targetConceptOverrides.added` and `targetConceptOverrides.excluded`. Automatic job-posting concepts remain reproducible from the source posting; user curation is stored separately so the original posting text is never rewritten. Readiness Review and Coaching resolve the same combined target set.
 
+## Structured requirement parsing
+
+Job-posting requirements are parsed as structured records rather than raw trigger-word sentences. The parser recognizes required/minimum/preferred qualification sections, excludes headings and common descriptive/culture/benefits sections, and stores timing prefixes such as `Upon hire` separately from the requirement text. Coaching and Readiness Review consume the same structured requirement records and coverage status so the two surfaces cannot disagree merely because they use different parsers.
+
 ## Coaching boundary
 
 The Coaching workspace is entirely local and deterministic. It turns the target posting into a practical tailoring plan rather than generating a replacement resume. It can prioritize existing bullets, surface job-related terminology already reflected in the resume, use supporting job descriptions as context, and suggest where more detail would improve visibility.
