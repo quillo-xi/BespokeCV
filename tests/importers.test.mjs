@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createDocxBytes } from '../site/lib/docx.js';
 import { createBlankResume } from '../site/lib/model.js';
-import { extractDocxText, parseResumeText } from '../site/lib/importers.js';
+import { extractDocxText, importSupportingDocument, parseResumeText } from '../site/lib/importers.js';
 
 test('DOCX importer extracts readable local text from generated resume package', async () => {
   const resume = createBlankResume();
@@ -92,4 +92,18 @@ Jordan Taylor - page 3`;
   assert.ok(resume.skills.includes('R (Programming Language)'));
   assert.equal(resume.skills.some((item) => /page\s+\d+/i.test(item)), false);
   assert.equal(resume.importedSource.text.includes('Jordan Taylor - page 1'), false);
+});
+
+
+test('supporting job-description documents are extracted without mapping them into resume fields', async () => {
+  const file = new File([
+    'Operations Manager\nResponsibilities include vendor management, quarterly compliance reviews, and process improvement across regional teams.'
+  ], 'operations-manager.txt', { type: 'text/plain' });
+
+  const result = await importSupportingDocument(file);
+  assert.equal(result.fileName, 'operations-manager.txt');
+  assert.equal(result.format, 'text');
+  assert.match(result.text, /vendor management/);
+  assert.match(result.text, /quarterly compliance reviews/);
+  assert.ok(result.importedAt);
 });
