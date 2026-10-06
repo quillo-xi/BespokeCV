@@ -78,6 +78,14 @@ export function renderReviewPanel(resume, panel, { editConcepts = false } = {}) 
     <div class="score-hero"><div class="score-ring" style="--score:${analysis.overall}"><span>${analysis.overall}</span></div><div class="score-copy"><h2>${scoreLabel(analysis.overall)}</h2><p>The overall readiness score is a weighted coaching signal. Treat the recommendations and missing evidence—not the number itself—as the useful output.</p></div></div>
     <div class="score-grid">${cards.map(([label,value,detail]) => `<div class="score-card"><div class="score-card-top"><span>${label}</span><span>${value}${value === '—' ? '' : '/100'}</span></div><small>${detail}</small>${value === '—' ? '' : `<div class="meter"><span style="width:${value}%"></span></div>`}</div>`).join('')}</div>
     <section class="form-section"><div class="section-title-row"><h2>Priority recommendations</h2><p>${analysis.bulletCount} accomplishment bullets reviewed</p></div><div class="recommendations">${analysis.recommendations.map((item)=>`<article class="recommendation ${item.severity}"><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.detail)}</p></article>`).join('')}</div></section>
+    <section class="form-section">
+      <div class="section-title-row">
+        <div><h2>Job requirements</h2><p>Same requirement coverage used in Coaching</p></div>
+        ${coaching?.requirements?.length ? `<span class="coach-open-count">${coaching.requirements.filter((item) => item.status !== 'covered').length} item${coaching.requirements.filter((item) => item.status !== 'covered').length === 1 ? '' : 's'} to review</span>` : ''}
+      </div>
+      <p class="help">Section headings, employer-culture language, benefits, and other posting text are excluded. Timing such as “Upon hire” is shown separately from the requirement itself.</p>
+      ${coaching?.requirements?.length ? `<ul class="readiness-requirement-list">${coaching.requirements.map(renderReadinessRequirement).join('')}</ul>` : '<p class="help">No clear required or preferred qualifications were detected.</p>'}
+    </section>
     <section class="form-section target-concept-section">
       <div class="section-title-row">
         <div><h2>Target-language coverage</h2><p>Wording overlap — separate from requirement coverage</p></div>
@@ -97,14 +105,6 @@ export function renderReviewPanel(resume, panel, { editConcepts = false } = {}) 
         <p class="help">Unrepresented concepts to investigate <span class="muted-inline">— wording to review, not a qualification verdict</span></p>
         <div class="keyword-wrap">${analysis.missingKeywords.slice(0,16).map((item)=>renderConceptChip(item,{ missing: true, editable: editConcepts })).join('') || '<span class="help">No additional target-language gaps found.</span>'}</div>
       ` : '<p class="help">Add a target job description to activate this section.</p>'}
-    </section>
-    <section class="form-section">
-      <div class="section-title-row">
-        <div><h2>Job requirements</h2><p>Same requirement coverage used in Coaching</p></div>
-        ${coaching?.requirements?.length ? `<span class="coach-open-count">${coaching.requirements.filter((item) => item.status !== 'covered').length} item${coaching.requirements.filter((item) => item.status !== 'covered').length === 1 ? '' : 's'} to review</span>` : ''}
-      </div>
-      <p class="help">Section headings, employer-culture language, benefits, and other posting text are excluded. Timing such as “Upon hire” is shown separately from the requirement itself.</p>
-      ${coaching?.requirements?.length ? `<ul class="readiness-requirement-list">${coaching.requirements.map(renderReadinessRequirement).join('')}</ul>` : '<p class="help">No clear required or preferred qualifications were detected.</p>'}
     </section>
     <section class="form-section"><div class="section-title-row"><h2>Evidence diagnostics</h2><p>Context beats keyword stuffing</p></div><p class="help"><strong>${analysis.metricCount}/${analysis.bulletCount || 0}</strong> bullets contain a measurable signal; <strong>${analysis.actionCount}/${analysis.bulletCount || 0}</strong> start with a recognized action verb. These are coaching heuristics, not hard hiring rules.</p></section>`;
 }
