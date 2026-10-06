@@ -10,7 +10,7 @@ BespokeCV is a local-first Progressive Web App hosted from GitHub Pages. The bro
 - `site/ui/`: focused rendering modules.
 - `site/lib/model.js`: schema, normalization, and plain-text representation.
 - `site/lib/analyzer.js`: transparent local diagnostics, phrase-aware target matching, boilerplate filtering, and requirement classification.
-- `site/lib/optimizer.js`: local ideal-target blueprint, resume-evidence mapping, supporting career-source context, relevance ordering, and gap-coaching model.
+- `site/lib/optimizer.js`: local tailoring engine for target-role priorities, resume-evidence mapping, supporting career-source context, relevance ordering, requirement coaching, and final-check guidance.
 - `site/lib/importers.js`: local DOCX/PDF/TXT/backup ingestion and conservative structure mapping.
 - `site/lib/job-source.js`: validated public job-page retrieval and inert text extraction.
 - `site/lib/docx.js`: dependency-free OOXML/DOCX generation.
@@ -37,11 +37,13 @@ The app never executes fetched scripts or injects fetched markup. Platforms that
 
 ## Target-concept curation
 
-Resume schema version 3 stores `targetConceptOverrides.added` and `targetConceptOverrides.excluded`. Automatic job-posting concepts remain reproducible from the source posting; user curation is stored separately so the original posting text is never rewritten. Readiness Review and Optimized Draft resolve the same combined target set.
+Resume schema version 4 stores `targetConceptOverrides.added` and `targetConceptOverrides.excluded`. Automatic job-posting concepts remain reproducible from the source posting; user curation is stored separately so the original posting text is never rewritten. Readiness Review and Coaching resolve the same combined target set.
 
-## Optimized-draft boundary
+## Coaching boundary
 
-The optimized workspace is entirely local and deterministic. It may reorganize existing bullets by relevance and suggest target terminology only when evidence is found in the loaded resume. The hypothetical ideal blueprint is explicitly labeled reference-only. Requirements without adequate resume evidence remain annotated as gaps or items requiring manual verification; the optimizer must never invent credentials, degrees, years of experience, tools, metrics, or regulated-domain experience.
+The Coaching workspace is entirely local and deterministic. It turns the target posting into a practical tailoring plan rather than generating a replacement resume. It can prioritize existing bullets, surface job-related terminology already reflected in the resume, use supporting job descriptions as context, and suggest where more detail would improve visibility.
+
+Resume content remains the basis for qualification coverage. Supporting role descriptions can make prompts more specific but do not, by themselves, establish an accomplishment, metric, credential, degree, or qualification. Coaching uses the simple states **Covered**, **Needs detail**, and **Not shown yet** so the interface stays useful without repeatedly warning the user about the same boundary.
 
 ## Availability and updates
 
