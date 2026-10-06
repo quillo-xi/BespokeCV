@@ -74,7 +74,7 @@ function handleInput(event) {
 }
 
 function handleEditorClick(event) {
-  const button = event.target.closest('[data-action]');
+  const button = event.target.closest('[data-action], [data-resume-subtab]');
   if (!button) return;
   const action = button.dataset.action;
 
