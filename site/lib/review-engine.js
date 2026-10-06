@@ -4,7 +4,7 @@ const IRREGULAR_PAST = new Set(`built drove led oversaw won grew cut ran made wr
 const FREQUENCY_PATTERN = /\b(?:daily|weekly|biweekly|monthly|quarterly|annually|annual|yearly|per\s+(?:shift|day|week|month|quarter|year)|each\s+(?:shift|day|week|month|quarter|year))\b/i;
 const NUMBER_SCOPE_PATTERN = /(?:\$\s?\d|\b\d+(?:\.\d+)?\s?(?:%|percent|x|k|m|b|hours?|days?|weeks?|months?|years?|users?|clients?|sites?|locations?|projects?|cases?|records?|transactions?|people|staff|employees?|leaders?|teams?|workflows?|dashboards?|systems?|tools?|programs?|patients?|orders?|prescriptions?|preparations?|audits?|reviews?|reports?|assets?|items?|departments?|regions?|states?|facilities?)(?=\s|[.,;:)]|$))/i;
 const BREADTH_PATTERN = /\b(?:enterprise[- ]wide|organization[- ]wide|company[- ]wide|department[- ]wide|regional|national|multi[- ]site|cross[- ]functional|multidisciplinary|portfolio|across\s+(?:the\s+)?(?:team|department|organization|company|region|sites?|locations?|functions?))\b/i;
-const OUTCOME_PATTERN = /\b(?:achiev(?:ed|ing)|accelerat(?:ed|ing)|decreas(?:ed|ing)|deliver(?:ed|ing)|eliminat(?:ed|ing)|expand(?:ed|ing)|generat(?:ed|ing)|grew|improv(?:ed|ing)|increas(?:ed|ing)|lower(?:ed|ing)|optimiz(?:ed|ing)|prevent(?:ed|ing)|reduc(?:ed|ing)|resolv(?:ed|ing)|sav(?:ed|ing)|streamlin(?:ed|ing)|strengthen(?:ed|ing)|transform(?:ed|ing)|upgrad(?:ed|ing)|result(?:ed|ing)\s+in|led\s+to|enabled|enhanced|maintained\s+(?:compliance|readiness|availability)|met\s+(?:deadline|target|goal)|on[- ]time|within\s+(?:budget|deadline))\b/i;
+const OUTCOME_PATTERN = /\b(?:achiev(?:ed|ing|ement|ements)|accelerat(?:ed|ing)|decreas(?:ed|ing)|deliver(?:ed|ing)|eliminat(?:ed|ing)|expand(?:ed|ing|sion)|generat(?:ed|ing)|grew|improv(?:ed|ing|ement|ements)|increas(?:ed|ing)|lower(?:ed|ing)|optimiz(?:ed|ing|ation)|prevent(?:ed|ing)|reduc(?:ed|ing|tion)|resolv(?:ed|ing)|sav(?:ed|ing|ings)|streamlin(?:ed|ing)|strengthen(?:ed|ing)|transform(?:ed|ing)|upgrad(?:ed|ing)|result(?:ed|ing)\s+in|led\s+to|enabled|enhanced|maintained\s+(?:compliance|readiness|availability)|met\s+(?:deadline|target|goal)|on[- ]time|within\s+(?:budget|deadline))\b/i;
 const STANDARD_PATTERN = /\b(?:USP\s*<?\d+>?|ISO\s*\d+|FDA|GCP|ICH|OSHA|HIPAA|SOX|GAAP|GMP|cGMP|SOPs?|standard operating procedures?|policy|policies|regulation|regulations|regulatory|protocol|protocols|accreditation|audit criteria|quality standard)\b/i;
 const TOOL_PATTERN = /\b(?:SQL|Excel|Tableau|Power BI|Python|RIVA|EXACTAMIX|Simplifi\s*797|CPR\+|Salesforce|SAP|Epic|Workday|Jira|ServiceNow|GitHub|Azure|AWS|software|platform|system|systems|database|dashboard|report writer|automation)\b/i;
 const OWNERSHIP_PATTERN = /\b(?:led|lead|managed|manage|owned|owner|oversaw|supervised|supervise|directed|coordinated|coordinate|administered|administer|accountab(?:le|ility)|primary|project lead|team lead|chief|nco|commander|responsible for)\b/i;
@@ -162,11 +162,14 @@ function safeRewrite(text) {
   let match = original.match(/^responsible\s+for\s+(?:the\s+)?accountability\s+and\s+safeguarding\s+of\s+(.+)/i);
   if (match) return `Safeguarded and maintained accountability for ${match[1].replace(/[.]+$/, '')}.`;
 
-  match = original.match(/^responsible\s+for\s+(.+)/i);
-  if (match) return `Managed ${match[1].replace(/^the\s+/i, '').replace(/[.]+$/, '')}.`;
-
-  match = original.match(/^provide\s+(?:full[- ]time\s+)?support\s+to\s+develop\s+and\s+administer\s+(.+)/i);
-  if (match) return `Supported the development and administration of ${match[1].replace(/[.]+$/, '')}.`;
+  match = original.match(/^provide\s+(?:full[- ]time\s+)?support\s+to\s+develop\s+and\s+administer\s+(.+?)(?:,?\s+and\s+provide\s+(.+))?\.?$/i);
+  if (match) {
+    const primary = match[1].replace(/[.,;]+$/, '');
+    const secondary = match[2]?.replace(/[.]+$/, '');
+    return secondary
+      ? `Supported the development and administration of ${primary} and provided ${secondary}.`
+      : `Supported the development and administration of ${primary}.`;
+  }
 
   match = original.match(/^project\s+lead\s*[;:—-]\s*managed\s+(.+?)\s+(?:which\s+)?led\s+to\s+(.+)/i);
   if (match) return `Led ${match[1].replace(/[;,]+$/, '')} as project lead, resulting in ${match[2].replace(/[.]+$/, '')}.`;
