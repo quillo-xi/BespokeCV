@@ -29,7 +29,7 @@ function renderRequirement(item) {
   return `<article class="coach-requirement ${meta.tone}">
     <div class="coach-requirement-head">
       <span class="coach-status ${meta.tone}">${escapeHtml(meta.label)}</span>
-      <span class="coach-requirement-type">${escapeHtml(item.type)}</span>
+      <span class="coach-requirement-meta">${item.timing ? `<span class="coach-timing">${escapeHtml(item.timing)}</span>` : ''}<span class="coach-requirement-type">${escapeHtml(item.type)}</span></span>
     </div>
     <p class="coach-requirement-text">${escapeHtml(item.text)}</p>
     ${evidence}
