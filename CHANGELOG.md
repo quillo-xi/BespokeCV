@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.0 — 2026-10-06
+
+Document-first intake and safe target sourcing.
+
+- Word (.docx), PDF, TXT, and BespokeCV backup import; document attachment is now the preferred starting workflow.
+- Local DOCX extraction and pinned local PDF.js parsing with no resume upload to a BespokeCV server.
+- Conservative structured-draft parsing with extracted source text retained locally for review/recovery.
+- Paste-text and manual-entry fallbacks retained.
+- User-facing helper/placeholder text replaced with neutral cross-industry examples; CI blocks reintroduction of the user's prior pharmacy/sterile-compounding examples.
+- HTTPS job-posting URL validation and safe public-page text/JSON-LD extraction where CORS and source policy allow it.
+- LinkedIn and Indeed handled as validated source links with paste fallback rather than automated scraping or protection bypass.
+- Added URL safety controls for credentials, ports, private/local/IP destinations, redirects, timeouts, response size, content types, referrer/credential omission, and inert parsing.
+- Expanded automated coverage and updated architecture, QA, security, contribution, and roadmap documentation.
+
 ## 0.1.0 — 2026-10-06
 
 Initial production foundation.
