@@ -446,10 +446,11 @@ export function analyzeResume(resume) {
   if (!resume.jobDescription.trim()) push('medium', 'Add the target job description', 'Target matching stays intentionally unscored until you paste the actual posting.');
   if (resume.skills.filter(Boolean).length < 6) push('medium', 'Build a focused skills section', 'Use recognizable tools, methods, credentials, and domain skills that are relevant to the target role.');
   if (resume.skills.filter(Boolean).length > 18) push('low', 'Trim the skills list', 'A focused set is easier to scan and reduces the appearance of keyword stuffing.');
-  if (!recommendations.length) push('low', 'Strong baseline', 'No major rule-based issues were found. Perform a final truthfulness, spelling, and role-specific review before submitting.');
+  if (!recommendations.length) push('low', 'Strong baseline', 'No major rule-based issues were found. Do a final spelling, consistency, and role-specific review before submitting.');
 
-  const effectiveTarget = resume.jobDescription.trim() ? targetScore : 50;
-  const overall = bounded(parseScore * 0.25 + evidenceScore * 0.30 + effectiveTarget * 0.25 + scanScore * 0.20);
+  const overall = resume.jobDescription.trim()
+    ? bounded(parseScore * 0.25 + evidenceScore * 0.30 + targetScore * 0.25 + scanScore * 0.20)
+    : bounded(parseScore * 0.32 + evidenceScore * 0.42 + scanScore * 0.26);
 
   return {
     overall,
