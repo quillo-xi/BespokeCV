@@ -28,6 +28,8 @@ Use the employer's terminology when it accurately describes the candidate's expe
 
 Never add hidden text, fabricated keywords, inflated titles, nonexistent tools, invented metrics, or credentials not held. An ideal-target resume may be shown only as an explicitly hypothetical reference. Personalized optimized content must be traceable to existing resume evidence or remain visibly annotated as a gap/recommendation.
 
+Supporting job descriptions, duty statements, and role summaries may provide terminology and responsibility context, but they are not proof that the candidate personally performed a duty, achieved a result, or met a qualification. Convert that context into resume content only after user verification and add personal scope/outcomes separately.
+
 ## File format
 
 Follow the employer's explicit upload instructions first. BespokeCV provides parser-friendly DOCX, print/PDF, and TXT for linearization/parser sanity checking. No format or score can guarantee a particular ATS ranking or hiring decision.
