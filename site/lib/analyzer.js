@@ -71,6 +71,18 @@ function normalizeRequirementCandidate(value, inheritedType = null) {
     text = cleanRequirementText(text.slice(requiredPrefix[0].length));
   }
 
+  const preferredSuffix = text.match(/\s+(?:is\s+)?preferred\.?$/i);
+  if (preferredSuffix) {
+    type = 'preferred';
+    text = cleanRequirementText(text.slice(0, -preferredSuffix[0].length));
+  }
+
+  const requiredSuffix = text.match(/\s+(?:is\s+)?required\.?$/i);
+  if (requiredSuffix) {
+    type = 'required';
+    text = cleanRequirementText(text.slice(0, -requiredSuffix[0].length));
+  }
+
   if (!text || requirementSectionKind(text)) return null;
   return { text, type, timing };
 }
