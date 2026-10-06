@@ -50,7 +50,7 @@ function normalizeRequirementCandidate(value, inheritedType = null) {
   let text = cleanRequirementText(value);
   if (!text) return null;
 
-  let type = inheritedType === 'preferred' ? 'preferred' : 'required';
+  let type = inheritedType === 'preferred' || PREFERRED_SIGNAL.test(text) ? 'preferred' : 'required';
   let timing = '';
 
   const timingMatch = text.match(TIMING_PREFIX);
