@@ -33,6 +33,23 @@ function renderReadinessRequirement(item) {
   </li>`;
 }
 
+function renderEvidenceExample(item) {
+  const criteria = (item.criteria ?? []).map((label) => `<span class="evidence-criteria">${escapeHtml(label)}</span>`).join('');
+  const changed = item.after && item.after !== item.before;
+  return `<article class="evidence-example-card ${escapeHtml(item.kind)}">
+    <div class="evidence-example-head">
+      <div><span class="eyebrow">${escapeHtml(item.roleLabel)}</span><h3>${escapeHtml(item.title)}</h3></div>
+      ${criteria ? `<div class="evidence-criteria-wrap">${criteria}</div>` : ''}
+    </div>
+    <div class="evidence-example-body">
+      <div><strong>From the resume</strong><p>${escapeHtml(item.before)}</p></div>
+      ${changed ? `<div class="evidence-example-after"><strong>Stronger version</strong><p>${escapeHtml(item.after)}</p></div>` : ''}
+    </div>
+    ${item.prompt ? `<div class="evidence-measure-prompt"><strong>Best next detail to add</strong><p>${escapeHtml(item.prompt)}</p></div>` : ''}
+    ${item.note ? `<p class="evidence-example-note">${escapeHtml(item.note)}</p>` : ''}
+  </article>`;
+}
+
 export function renderTargetPanel(resume, panel) {
   const validation = resume.jobSourceUrl ? validateJobUrl(resume.jobSourceUrl) : null;
   const sourceLink = validation?.ok ? `<a class="safe-link" href="${escapeHtml(validation.url)}" target="_blank" rel="noopener noreferrer">Open source listing ↗</a>` : '';
@@ -107,5 +124,15 @@ export function renderReviewPanel(resume, panel, { editConcepts = false } = {}) 
         <div class="keyword-wrap">${analysis.missingKeywords.slice(0,16).map((item)=>renderConceptChip(item,{ missing: true, editable: editConcepts })).join('') || '<span class="help">No additional target-language gaps found.</span>'}</div>
       ` : '<p class="help">Add a target job description to activate this section.</p>'}
     </section>
-    <section class="form-section"><div class="section-title-row"><h2>Evidence diagnostics</h2><p>Context beats keyword stuffing</p></div><p class="help"><strong>${analysis.metricCount}/${analysis.bulletCount || 0}</strong> bullets contain a measurable signal; <strong>${analysis.actionCount}/${analysis.bulletCount || 0}</strong> start with a recognized action verb. These are coaching heuristics, not hard hiring rules.</p></section>`;
+    <section class="form-section evidence-diagnostics-section">
+      <div class="section-title-row"><h2>Evidence diagnostics</h2><p>Context beats keyword stuffing</p></div>
+      <p class="help"><strong>${analysis.metricCount}/${analysis.bulletCount || 0}</strong> bullets contain a measurable signal; <strong>${analysis.actionCount}/${analysis.bulletCount || 0}</strong> start with a recognized action verb. These are coaching heuristics, not hard hiring rules.</p>
+      ${analysis.evidenceExamples?.length ? `
+        <div class="evidence-example-intro">
+          <strong>Examples from this resume</strong>
+          <span>These use the resume's own wording and details to show what the diagnostic is looking for. When a useful number is not already present, BespokeCV asks what to add instead of supplying one.</span>
+        </div>
+        <div class="evidence-example-list">${analysis.evidenceExamples.map(renderEvidenceExample).join('')}</div>
+      ` : '<p class="help">Add accomplishment bullets to see resume-specific examples here.</p>'}
+    </section>`;
 }
