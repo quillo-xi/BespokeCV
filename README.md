@@ -2,7 +2,7 @@
 
 BespokeCV is a local-first resume studio designed around current ATS parsing, AI-assisted recruiting, recruiter scan behavior, and hiring-manager readability.
 
-**Current version:** 0.3.3
+**Current version:** 0.3.4
 
 ## What it does
 
@@ -11,10 +11,10 @@ BespokeCV is a local-first resume studio designed around current ATS parsing, AI
 - Builds a clean single-column resume using conventional sections and autosaves locally.
 - Accepts a public job-posting URL, validates it through a constrained security policy, and extracts job text when the source permits safe cross-origin reading.
 - Treats restricted sources such as LinkedIn and Indeed as validated outbound links with paste fallback rather than bypassing platform protections or scraping restrictions.
-- Accepts pasted job descriptions and surfaces canonical, concept-level target language and required/preferred qualification signals while filtering common legal/employment boilerplate. Users can switch Target-language coverage into edit mode to remove detected concepts, add their own, or reset to automatic detection; curation is saved with the resume and shared with Optimized Draft.
+- Accepts pasted job descriptions and surfaces canonical, concept-level target language and required/preferred qualification signals while filtering common legal/employment boilerplate. Users can switch Target-language coverage into edit mode to remove detected concepts, add their own, or reset to automatic detection; curation is saved with the resume and shared with Coaching.
 - Separately scores parse integrity, evidence strength, target alignment, and human scan quality.
-- Accepts multiple current/previous job-description or duty-statement sources (DOCX/PDF/TXT and/or separate free-text entries), parsed locally and stored separately from the resume. These sources provide role context for more specific optimization coaching without being treated as accomplishment proof.
-- Adds an Optimized Draft workspace with a hypothetical ideal-target blueprint, an evidence-grounded personalized draft, source-informed coaching, and redline-style gap comments for unsupported or uncertain requirements.
+- Accepts multiple current/previous job-description or duty-statement sources (DOCX/PDF/TXT and/or separate free-text entries), parsed locally and stored separately from the resume. These sources provide role context for more specific tailoring coaching.
+- Adds a comprehensive **Coaching** workspace that turns the target posting into a step-by-step tailoring plan: priorities, headline/summary guidance, skill ordering, work-experience emphasis, requirement coaching, source-informed detail prompts, and a final submission checklist.
 - Exports a native `.docx`, ATS-readable `.txt`, browser print/PDF, and a re-importable BespokeCV JSON backup.
 - Runs as a responsive Progressive Web App (PWA) on desktop and mobile browsers with an offline fallback.
 
@@ -73,4 +73,4 @@ Production URL:
 
 ## Privacy
 
-Resume data is personal information. BespokeCV stores editable data and imported source text in browser local storage; GitHub receives only the application code and deployment assets. Exported JSON backups contain the user's entered/imported resume and target-job content and should be handled accordingly.
+Resume data is personal information. BespokeCV stores editable data and imported source text in browser local storage; GitHub receives only the application code and deployment assets. Exported JSON backups contain the user's entered/imported resume, supporting job-description sources, target-job content, and local curation choices and should be handled accordingly.

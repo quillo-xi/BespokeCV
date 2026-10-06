@@ -26,9 +26,9 @@ Prefer **action + scope/context + evidence/result**. Strong evidence can be perc
 
 Use the employer's terminology when it accurately describes the candidate's experience. Spell out uncommon acronyms on first use. Put important skills in experience context, not only in a keyword list. Address required qualifications explicitly when genuinely met.
 
-Never add hidden text, fabricated keywords, inflated titles, nonexistent tools, invented metrics, or credentials not held. An ideal-target resume may be shown only as an explicitly hypothetical reference. Personalized optimized content must be traceable to existing resume evidence or remain visibly annotated as a gap/recommendation.
+Do not use hidden keyword stuffing or add titles, tools, metrics, education, or credentials that are not part of the candidate’s background. Tailoring should change emphasis, order, specificity, and wording—not the underlying history.
 
-Supporting job descriptions, duty statements, and role summaries may provide terminology and responsibility context, but they are not proof that the candidate personally performed a duty, achieved a result, or met a qualification. Convert that context into resume content only after user verification and add personal scope/outcomes separately.
+Supporting job descriptions, duty statements, and role summaries can help recover useful terminology and responsibility context. Use them to prompt specific details, then add the candidate’s own scope, frequency, decisions, and outcomes where applicable.
 
 ## File format
 

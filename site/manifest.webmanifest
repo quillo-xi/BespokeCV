@@ -1,7 +1,7 @@
 {
   "name": "BespokeCV Resume Studio",
   "short_name": "BespokeCV",
-  "description": "Local-first resume builder and evidence-based readiness analyzer.",
+  "description": "Local-first resume builder, tailoring coach, and readiness analyzer.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

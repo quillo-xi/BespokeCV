@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildOptimizedDraft } from '../site/lib/optimizer.js';
+import { buildCoachingPlan } from '../site/lib/optimizer.js';
 import { createBlankResume } from '../site/lib/model.js';
 
-test('optimized draft uses resume evidence and leaves unsupported requirements visible', () => {
+test('coaching plan focuses the resume on supported target strengths', () => {
   const resume = createBlankResume();
   resume.profile.fullName = 'Alex Morgan';
   resume.profile.headline = 'Quality and Operations Specialist';
@@ -28,17 +28,19 @@ Required: regulatory compliance and accurate data review.
 Preferred: SoCRA or ACRP certification.
 `;
 
-  const draft = buildOptimizedDraft(resume);
-  assert.match(draft.personalized.headline, /Quality Assurance Coordinator/);
-  assert.match(draft.personalized.summary, /quality assurance/i);
-  assert.equal(/gcp/i.test(draft.personalized.summary), false);
-  assert.ok(draft.requirements.some((item) => /GCP/i.test(item.text) && item.status !== 'supported'));
-  assert.ok(draft.requirements.some((item) => /SoCRA/i.test(item.text) && item.type === 'preferred'));
-  assert.ok(draft.personalized.experiences[0].bullets[0].score >= draft.personalized.experiences[0].bullets.at(-1).score);
+  const plan = buildCoachingPlan(resume);
+
+  assert.match(plan.headline.suggested, /Quality Assurance Coordinator/);
+  assert.match(plan.summary.suggested, /quality assurance/i);
+  assert.equal(/gcp/i.test(plan.summary.suggested), false);
+  assert.ok(plan.requirements.some((item) => /GCP/i.test(item.text) && item.status !== 'covered'));
+  assert.ok(plan.requirements.some((item) => /SoCRA/i.test(item.text) && item.type === 'preferred'));
+  assert.ok(plan.experiences[0].bullets[0].score >= plan.experiences[0].bullets.at(-1).score);
+  assert.ok(plan.priorities.length >= 2);
+  assert.equal(plan.checklist.length, 6);
 });
 
-
-test('optimized draft honors curated target concepts', () => {
+test('coaching plan honors curated target concepts', () => {
   const resume = createBlankResume();
   resume.profile.fullName = 'Alex Morgan';
   resume.skills = ['Vendor Oversight'];
@@ -48,14 +50,15 @@ test('optimized draft honors curated target concepts', () => {
     excluded: ['regulatory compliance']
   };
 
-  const draft = buildOptimizedDraft(resume);
-  const terms = draft.targetTerms.map((item) => item.term.toLowerCase());
+  const plan = buildCoachingPlan(resume);
+  const terms = plan.targetTerms.map((item) => item.term.toLowerCase());
+
   assert.ok(terms.includes('vendor oversight'));
   assert.equal(terms.includes('regulatory compliance'), false);
+  assert.ok(plan.strengths.some((item) => item.term.toLowerCase() === 'vendor oversight'));
 });
 
-
-test('supporting job descriptions make coaching specific without becoming accomplishment evidence', () => {
+test('supporting job descriptions make coaching more specific without changing requirement coverage by themselves', () => {
   const resume = createBlankResume();
   resume.profile.fullName = 'Alex Morgan';
   resume.experiences[0] = {
@@ -80,15 +83,29 @@ Required: monitoring and auditing experience.
     fileText: 'Operations Manager responsibilities include monitoring and auditing regulated workflows against documented compliance procedures and coordinating corrective follow-up with regional teams.'
   }];
 
-  const draft = buildOptimizedDraft(resume);
-  const auditRequirement = draft.requirements.find((item) => /monitoring and auditing/i.test(item.text));
+  const plan = buildCoachingPlan(resume);
+  const auditRequirement = plan.requirements.find((item) => /monitoring and auditing/i.test(item.text));
 
-  assert.equal(draft.careerContext.sourceCount, 1);
-  assert.ok(draft.careerContext.alignedSources.length >= 1);
-  assert.ok(draft.personalized.experiences[0].sourceSuggestions.length >= 1);
+  assert.equal(plan.snapshot.careerSourceCount, 1);
+  assert.ok(plan.careerContext.alignedSources.length >= 1);
+  assert.ok(plan.experiences[0].sourceSuggestions.length >= 1);
   assert.ok(auditRequirement);
-  assert.notEqual(auditRequirement.status, 'supported');
+  assert.notEqual(auditRequirement.status, 'covered');
   assert.ok(auditRequirement.sourceContext.length >= 1);
-  assert.match(auditRequirement.comment, /supporting job-description source/i);
-  assert.equal(draft.idealReference.bullets.some((item) => /\[(?:scope|process|standard|tool)/i.test(item)), false);
+  assert.match(auditRequirement.comment, /job-description source/i);
+  assert.ok(plan.sourceOpportunities.some((item) => /monitoring and auditing/i.test(item.term)));
+});
+
+test('coaching language uses practical tailoring states', () => {
+  const resume = createBlankResume();
+  resume.jobDescription = `
+Required: project management experience.
+Preferred: risk management experience.
+`;
+
+  const plan = buildCoachingPlan(resume);
+  const statuses = new Set(plan.requirements.map((item) => item.status));
+
+  for (const status of statuses) assert.ok(['covered', 'detail', 'not-shown'].includes(status));
+  assert.equal(plan.requirements.some((item) => /fabricat|truthful|dishonest/i.test(item.comment)), false);
 });
