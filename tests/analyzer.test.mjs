@@ -55,3 +55,25 @@ test('plain text export uses standard section headings', () => {
   assert.match(output, /WORK EXPERIENCE/);
   assert.match(output, /EDUCATION/);
 });
+
+
+test('target language prefers meaningful phrases and filters boilerplate', () => {
+  const posting = `
+Quality Assurance Coordinator
+Conduct internal quality assurance monitoring and auditing for clinical research studies.
+Confirm regulatory compliance and data compliance; review clinical trial documentation.
+Conditions of Employment: E-Verify and pre-placement health evaluation.
+Equal Opportunity Employer. Employment misconduct policy applies.
+All work is performed under applicable university policy.
+`;
+  const terms = extractKeywords(posting, 20).map((item) => item.term);
+  assert.ok(terms.includes('quality assurance'));
+  assert.ok(terms.some((term) => term.includes('clinical research')));
+  assert.ok(terms.some((term) => term.includes('regulatory compliance')));
+  assert.equal(terms.includes('quality'), false);
+  assert.equal(terms.includes('assurance'), false);
+  assert.equal(terms.includes('employment'), false);
+  assert.equal(terms.includes('misconduct'), false);
+  assert.equal(terms.includes('all'), false);
+  assert.equal(terms.includes('under'), false);
+});

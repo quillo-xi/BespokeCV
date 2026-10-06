@@ -4,7 +4,7 @@
 
 Every pull request and push to `main` stages the pinned PDF.js assets and runs `npm run check`. The gate covers unit tests, JavaScript syntax, required files, version consistency, PWA configuration, security/accessibility shell markers, safe job-URL controls, PDF.js pinning, and a core source-size budget.
 
-Unit coverage includes target keyword extraction, requirement extraction, scoring behavior, standard linearized resume headings, DOCX package generation, DOCX text extraction, conservative resume-text mapping, and job-URL validation/restricted-source behavior.
+Unit coverage includes phrase-aware target extraction, nested-term de-duplication, boilerplate filtering, requirement extraction, optimized-draft evidence/gap behavior, scoring behavior, standard linearized resume headings, DOCX package generation, DOCX text extraction, conservative resume-text mapping, and job-URL validation/restricted-source behavior.
 
 The UI gate also rejects reintroduction of helper/example text tied to a specific Clinical Quality Coordinator / Pharmacy Technician / sterile-compounding background.
 
@@ -21,6 +21,10 @@ The original file must never be uploaded to a BespokeCV server in the 0.2 archit
 ## Job-link security regression checklist
 
 Only HTTPS is accepted. Embedded credentials, private/local/IP-literal destinations, nonstandard ports, redirects, oversized responses, and unexpected content types must be rejected. Requests must omit credentials and referrer data. Fetched markup must be treated as inert input, not executed or directly injected. LinkedIn and Indeed URLs must remain link-only/paste-fallback sources unless an approved official integration replaces that policy.
+
+## Optimized-draft regression checklist
+
+The personalized optimized draft must never incorporate an unsupported target requirement as a user claim. Hypothetical ideal content must remain visibly labeled reference-only. Missing/partial requirements must remain visible as annotations. Target-language chips must suppress redundant single words when a stronger phrase is retained and filter common employment/legal boilerplate.
 
 ## Resume-output regression checklist
 
