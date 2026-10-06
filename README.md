@@ -50,9 +50,9 @@ npm run check
 
 The workflow in `.github/workflows/ci-deploy.yml` deploys `site/` on every successful push to `main`. Pull requests run quality gates but do not deploy.
 
-GitHub Pages must be enabled once for the repository with **Settings → Pages → Build and deployment → Source: GitHub Actions**. Because this repository is private, GitHub currently requires a plan that includes Pages for private repositories (for a personal account, GitHub Pro or higher). The published Pages site itself is public unless an organization/enterprise configuration provides private Pages access.
+GitHub Pages is enabled for this repository and the workflow deploys `site/` after every successful push to `main`. GitHub currently reports this repository as public, so the application code and repository documentation are publicly visible; user-entered resume data still remains local to the browser unless the user exports it.
 
-Expected GitHub.com project URL after Pages is enabled:
+Production URL:
 
 `https://quillo-xi.github.io/BespokeCV/`
 
