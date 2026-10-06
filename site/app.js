@@ -4,14 +4,14 @@ import { importResumeFile, importSupportingDocument, parseResumeText } from './l
 import { fetchJobPosting } from './lib/job-source.js';
 import { renderResumeEditor } from './ui/editor.js';
 import { renderTargetPanel, renderReviewPanel } from './ui/review.js';
-import { renderOptimizedPanel } from './ui/optimized.js';
+import { renderCoachingPanel } from './ui/optimized.js';
 import { renderPreview } from './ui/preview.js';
 
 const STORAGE_KEY = 'bespokecv.resume.v1';
 const $ = (selector) => document.querySelector(selector);
 const resumePanel = $('#resumePanel');
 const targetPanel = $('#targetPanel');
-const optimizedPanel = $('#optimizedPanel');
+const coachingPanel = $('#coachingPanel');
 const reviewPanel = $('#reviewPanel');
 const preview = $('#resumePreview');
 const saveStatus = $('#saveStatus');
@@ -55,7 +55,7 @@ function renderReview() {
 function renderAll({ editor = true } = {}) {
   if (editor) renderResumeEditor(resume, resumePanel, { activeTab: resumeContentTab });
   renderTargetPanel(resume, targetPanel);
-  renderOptimizedPanel(resume, optimizedPanel);
+  renderCoachingPanel(resume, coachingPanel);
   renderReview();
   renderPreview(resume, preview);
 }
@@ -69,7 +69,7 @@ function handleInput(event) {
   else setByPath(path, el.type === 'checkbox' ? el.checked : el.value);
   scheduleSave();
   renderPreview(resume, preview);
-  renderOptimizedPanel(resume, optimizedPanel);
+  renderCoachingPanel(resume, coachingPanel);
   renderReview();
 }
 
@@ -159,7 +159,7 @@ function conceptKey(value) {
 }
 
 function rerenderConceptSurfaces() {
-  renderOptimizedPanel(resume, optimizedPanel);
+  renderCoachingPanel(resume, coachingPanel);
   renderReview();
 }
 
@@ -229,7 +229,7 @@ async function importCareerSourceFile(file, index) {
     source.importedAt = result.importedAt;
     scheduleSave();
     renderResumeEditor(resume, resumePanel, { activeTab: resumeContentTab });
-    renderOptimizedPanel(resume, optimizedPanel);
+    renderCoachingPanel(resume, coachingPanel);
     showToast(`${file.name} added as career evidence`);
   } catch (error) {
     saveStatus.textContent = currentLabel;
@@ -245,9 +245,9 @@ function switchMode(mode) {
   }
   resumePanel.hidden = mode !== 'resume';
   targetPanel.hidden = mode !== 'target';
-  optimizedPanel.hidden = mode !== 'optimized';
+  coachingPanel.hidden = mode !== 'coaching';
   reviewPanel.hidden = mode !== 'review';
-  document.body.classList.toggle('optimized-mode', mode === 'optimized');
+  document.body.classList.toggle('coaching-mode', mode === 'coaching');
 }
 
 function showToast(message) {
