@@ -185,3 +185,43 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
   .workspace, .preview-pane { display: block !important; padding: 0 !important; min-height: 0 !important; }
   .resume-sheet { width: 100%; min-height: 0; box-shadow: none; margin: 0; padding: .72in .78in; font-size: 10.5pt; }
 }
+
+
+/* v0.2 intake and source-import surfaces */
+.intake-card {
+  display: grid;
+  gap: 14px;
+  margin: 0 0 24px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, #fbfcff 0%, #f7f9fc 100%);
+}
+.intake-card h2 { margin: 3px 0 6px; font-size: 18px; letter-spacing: -.02em; }
+.intake-card p { margin: 0; color: var(--muted); line-height: 1.5; font-size: 12px; }
+.intake-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.source-chip {
+  width: fit-content;
+  max-width: 100%;
+  padding: 7px 10px;
+  border: 1px solid #cfd8e7;
+  border-radius: 999px;
+  background: #fff;
+  color: #43516a;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.source-chip span { color: var(--muted); }
+.paste-fallback { border-top: 1px solid var(--line); padding-top: 12px; }
+.paste-fallback summary { cursor: pointer; font-weight: 750; font-size: 12px; color: #46546d; }
+.paste-fallback[open] summary { margin-bottom: 12px; }
+.paste-fallback .btn { margin-top: 10px; }
+.url-import-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: end; }
+.url-import-row .btn { min-height: 41px; }
+.safe-link { width: fit-content; font-size: 12px; font-weight: 750; color: var(--accent-strong); text-decoration: none; }
+.safe-link:hover { text-decoration: underline; }
+
+@media (max-width: 620px) {
+  .url-import-row { grid-template-columns: 1fr; }
+  .url-import-row .btn { width: 100%; }
+}
