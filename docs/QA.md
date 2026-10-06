@@ -2,17 +2,27 @@
 
 ## Automated gate
 
-Every pull request and push to `main` runs `npm run check`, covering unit tests, JavaScript syntax, required files, version consistency, PWA configuration, security/accessibility shell markers, and a core source-size budget.
+Every pull request and push to `main` stages the pinned PDF.js assets and runs `npm run check`. The gate covers unit tests, JavaScript syntax, required files, version consistency, PWA configuration, security/accessibility shell markers, safe job-URL controls, PDF.js pinning, and a core source-size budget.
 
-Unit coverage includes target keyword extraction, requirement extraction, scoring behavior, standard linearized resume headings, and DOCX package generation.
+Unit coverage includes target keyword extraction, requirement extraction, scoring behavior, standard linearized resume headings, DOCX package generation, DOCX text extraction, conservative resume-text mapping, and job-URL validation/restricted-source behavior.
+
+The UI gate also rejects reintroduction of helper/example text tied to a specific Clinical Quality Coordinator / Pharmacy Technician / sterile-compounding background.
 
 ## Manual release matrix
 
-For meaningful UI or export changes, test current major browsers on Windows (Edge, Chrome, Firefox), macOS/iMac (Safari, Chrome, Firefox), iPhone/iPad (Safari and installed web app), and Android (Chrome and installed PWA). Check editing, autosave, readiness analysis, narrow layouts, DOCX/TXT export, print/PDF, installation, update behavior, and offline reopen where applicable.
+For meaningful UI, import, or export changes, test current major browsers on Windows (Edge, Chrome, Firefox), macOS/iMac (Safari, Chrome, Firefox), iPhone/iPad (Safari and installed web app), and Android (Chrome and installed PWA). Check DOCX/PDF/TXT import, conservative draft mapping, manual/paste fallback, autosave, target URL validation, restricted-platform fallback, generic public job-page import where CORS allows, readiness analysis, narrow layouts, DOCX/TXT export, print/PDF, installation, update behavior, and offline reopen.
 
 Responsive spot checks: 320, 375, 768, 1024, 1366, 1440, and wide desktop widths.
 
-## Resume regression checklist
+## Resume-import regression checklist
+
+The original file must never be uploaded to a BespokeCV server in the 0.2 architecture. DOCX and PDF text extraction must remain local. File size limits must be enforced. Parsed fields must be reviewable and uncertain structure must not be fabricated. The extracted source text must remain available in the local backup for audit/recovery.
+
+## Job-link security regression checklist
+
+Only HTTPS is accepted. Embedded credentials, private/local/IP-literal destinations, nonstandard ports, redirects, oversized responses, and unexpected content types must be rejected. Requests must omit credentials and referrer data. Fetched markup must be treated as inert input, not executed or directly injected. LinkedIn and Indeed URLs must remain link-only/paste-fallback sources unless an approved official integration replaces that policy.
+
+## Resume-output regression checklist
 
 Contact information must remain in the document body. Output must remain one logical column with standard headings. DOCX must open without a repair prompt. TXT must preserve the same substantive content in linear reading order. Printed PDF must omit application chrome. Do not introduce hidden keyword stuffing, white text, tables, columns, graphics, or unsupported claims.
 
