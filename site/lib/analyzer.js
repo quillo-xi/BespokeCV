@@ -332,7 +332,6 @@ export function extractRequirementSignals(jobDescription, limit = 18) {
 
       const item = normalizeRequirementCandidate(sentence, inRequirementSection ? section : null);
       if (!item) continue;
-      if (!inRequirementSection && !STRONG_REQUIREMENT_SIGNAL.test(item.text) && !PREFERRED_SIGNAL.test(sentence)) continue;
 
       const key = item.text.toLowerCase();
       if (results.some((existing) => existing.text.toLowerCase() === key)) continue;
