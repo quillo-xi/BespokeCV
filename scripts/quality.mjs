@@ -57,6 +57,8 @@ if (!html.includes('data-mode="coaching"') || !html.includes('>Coaching</button>
 if (html.includes('>Optimized draft</button>')) failures.push('Legacy Optimized draft tab label must not return.');
 
 const reviewUi = fs.readFileSync(path.join(root, 'site/ui/review.js'), 'utf8');
+if (!reviewUi.includes('Examples from this resume')) failures.push('Evidence diagnostics must include resume-specific examples.');
+
 if (reviewUi.includes('Qualification signals')) failures.push('Legacy raw Qualification signals section must not return.');
 if (!reviewUi.includes('Same requirement coverage used in Coaching')) failures.push('Readiness Review must identify the shared requirement coverage model.');
 

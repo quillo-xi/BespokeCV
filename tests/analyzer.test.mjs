@@ -193,3 +193,59 @@ Experience with healthcare operations.
   const requirements = extractRequirementSignals(posting);
   assert.deepEqual(requirements.map((item) => item.type), ['required', 'required', 'preferred', 'preferred']);
 });
+
+
+test('evidence diagnostics recognize common resume action verbs and generate grounded examples', () => {
+  const resume = createBlankResume();
+  resume.profile.fullName = 'Alex Morgan';
+  resume.profile.email = 'alex@example.com';
+  resume.profile.phone = '555-0100';
+  resume.experiences[0] = {
+    ...resume.experiences[0],
+    title: 'Operations Specialist',
+    company: 'Example Organization',
+    bullets: [
+      'Operate and maintain Robotic Intravenous Automation (RIVA) & EXACTAMIX TPN automatic compounding systems',
+      'Project lead; managed a multidisciplinary team which led to measurable improvements to workflow and operation of RIVA',
+      'Prepare sterile IV admixtures, including hazardous, chemotherapy, and investigational drugs',
+      'Responsible for the accountability and safeguarding of $10M+ in military equipment, including sensitive items, weapon systems, vehicles, computers, and office equipment.'
+    ]
+  };
+
+  const result = analyzeResume(resume);
+
+  assert.equal(result.bulletCount, 4);
+  assert.equal(result.actionCount, 3);
+  assert.equal(result.metricCount, 1);
+
+  const combined = result.evidenceExamples.find((item) => item.kind === 'combined');
+  assert.ok(combined);
+  assert.match(combined.after, /^Safeguarded and maintained accountability for \$10M\+/);
+  assert.deepEqual(combined.criteria, ['Action opening', 'Measurable signal']);
+
+  const measurable = result.evidenceExamples.find((item) => item.kind === 'measure');
+  assert.ok(measurable);
+  assert.match(measurable.after, /covering 3 named categories/i);
+  assert.match(measurable.note, /already listed/i);
+});
+
+test('evidence diagnostics ask for a specific verified measure when no number can be derived', () => {
+  const resume = createBlankResume();
+  resume.experiences[0] = {
+    ...resume.experiences[0],
+    title: 'Program Coordinator',
+    company: 'Example Organization',
+    bullets: [
+      'Coordinated recurring training for new staff',
+      'Reviewed documentation for compliance with internal procedures'
+    ]
+  };
+
+  const result = analyzeResume(resume);
+  const prompt = result.evidenceExamples.find((item) => item.kind === 'measure-prompt');
+
+  assert.ok(prompt);
+  assert.ok(prompt.prompt);
+  assert.match(prompt.prompt, /how many|how often|count|frequency/i);
+  assert.equal(/\[.*\]/.test(prompt.after), false);
+});

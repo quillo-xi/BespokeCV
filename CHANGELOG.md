@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.8 — 2026-10-06
+
+Resume-grounded evidence diagnostics.
+
+- Expanded action-verb recognition to cover common resume verbs and simple inflections instead of undercounting legitimate bullet openings.
+- Added frequency words such as daily/weekly/monthly/quarterly/annually as measurable signals.
+- Added an **Examples from this resume** area under Readiness Review → Evidence diagnostics.
+- Examples use actual resume bullets and show before/after rewrites for stronger action openings and measurable context.
+- When a count can be derived directly from items already named in the bullet, BespokeCV may use that count in the example.
+- When the resume does not contain a safe number to use, BespokeCV asks a bullet-specific measurement question instead of inventing a value.
+- Added regression coverage for common action verbs, combined action+metric rewrites, derived list counts, and no-number fallback prompts.
+- No schema change.
+
+
 ## 0.3.7 — 2026-10-06
 
 Requirement parsing and Coaching/Readiness alignment.

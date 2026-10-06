@@ -39,3 +39,8 @@ Contact information must remain in the document body. Output must remain one log
 ## Rollback
 
 Production deploys only after quality passes. If a deployment fails, the prior successful Pages deployment remains the baseline. Revert the offending commit or correct it through a short-lived fix branch.
+
+
+## Evidence diagnostic examples
+
+Evidence diagnostics must recognize common resume action verbs and simple third-person inflections without requiring an artificially narrow verb list. Resume-specific examples must be built from actual accomplishment bullets. Rewrites may reorganize wording or derive a count from items explicitly listed in the source bullet, but they must not invent quantities. If no usable measure is present, the UI should ask a specific measurement question instead of inserting a placeholder number. At least one regression case must protect a combined action+metric rewrite and one must protect the no-number fallback.

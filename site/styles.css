@@ -904,3 +904,119 @@ body.coaching-mode .preview-toggle { display: none !important; }
   .readiness-requirement { display: block; }
   .readiness-requirement-meta { margin-top: 7px; }
 }
+
+
+/* Resume-grounded evidence diagnostic examples */
+.evidence-example-intro {
+  display: grid;
+  grid-template-columns: auto minmax(0,1fr);
+  gap: 8px 12px;
+  align-items: baseline;
+  margin: 12px 0 10px;
+  padding: 10px 11px;
+  border-radius: 9px;
+  background: #f7f9fc;
+  border: 1px solid var(--line);
+}
+.evidence-example-intro strong {
+  font-size: 11px;
+  color: #27344b;
+}
+.evidence-example-intro span {
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.45;
+}
+.evidence-example-list {
+  display: grid;
+  gap: 10px;
+}
+.evidence-example-card {
+  padding: 12px 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+.evidence-example-card.combined,
+.evidence-example-card.strong { border-left: 4px solid var(--good); }
+.evidence-example-card.measure,
+.evidence-example-card.measure-prompt { border-left: 4px solid #4f74c8; }
+.evidence-example-card.action { border-left: 4px solid #9b6cc2; }
+.evidence-example-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+.evidence-example-head .eyebrow {
+  display: block;
+  margin-bottom: 2px;
+}
+.evidence-example-head h3 {
+  margin: 0;
+  font-size: 11px;
+  color: #27344b;
+}
+.evidence-criteria-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 5px;
+}
+.evidence-criteria {
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: #edf3ff;
+  color: #405f9d;
+  font-size: 8px;
+  font-weight: 800;
+}
+.evidence-example-body {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 9px;
+  margin-top: 10px;
+}
+.evidence-example-body > div {
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: #f8f9fb;
+}
+.evidence-example-body .evidence-example-after {
+  background: #f1f8f5;
+  border: 1px solid #d7e9e1;
+}
+.evidence-example-body strong,
+.evidence-measure-prompt strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #566175;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.evidence-example-body p,
+.evidence-measure-prompt p {
+  margin: 0;
+  color: #344055;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.evidence-measure-prompt {
+  margin-top: 9px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: #f3f6fc;
+}
+.evidence-example-note {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.4;
+}
+@media (max-width: 700px) {
+  .evidence-example-intro,
+  .evidence-example-body { grid-template-columns: 1fr; }
+  .evidence-example-head { display: block; }
+  .evidence-criteria-wrap { justify-content: flex-start; margin-top: 6px; }
+}
