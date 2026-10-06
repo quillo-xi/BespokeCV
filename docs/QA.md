@@ -4,7 +4,7 @@
 
 Every pull request and push to `main` stages the pinned PDF.js assets and runs `npm run check`. The gate covers unit tests, JavaScript syntax, required files, version consistency, PWA configuration, security/accessibility shell markers, safe job-URL controls, PDF.js pinning, and a core source-size budget.
 
-Unit coverage includes phrase-aware target extraction, nested-term de-duplication, boilerplate filtering, requirement extraction, optimized-draft evidence/gap behavior, scoring behavior, standard linearized resume headings, DOCX package generation, DOCX text extraction, conservative resume-text mapping, and job-URL validation/restricted-source behavior.
+Unit coverage includes phrase-aware target extraction, nested-term de-duplication, boilerplate filtering, requirement extraction, coaching-plan requirement and prioritization behavior, scoring behavior, standard linearized resume headings, DOCX package generation, DOCX text extraction, conservative resume-text mapping, and job-URL validation/restricted-source behavior.
 
 The UI gate also rejects reintroduction of helper/example text tied to a specific Clinical Quality Coordinator / Pharmacy Technician / sterile-compounding background.
 
@@ -20,15 +20,17 @@ The original file must never be uploaded to a BespokeCV server in the 0.2 archit
 
 ## Supporting job-description regression checklist
 
-At least one source card must always exist. Additional cards may be added/removed dynamically. Free text and attached-document text must remain independent so either can be cleared without destroying the other. DOCX/PDF/TXT extraction stays local and follows the same document-size boundary as resume import. Supporting role-description text must survive normalization/backup and must never be treated as accomplishment or qualification proof. Optimized Draft may use relevant source sentences for more specific coaching while keeping requirement support status based on resume evidence.
+At least one source card must always exist. Additional cards may be added/removed dynamically. Free text and attached-document text must remain independent so either can be cleared without destroying the other. DOCX/PDF/TXT extraction stays local and follows the same document-size boundary as resume import. Supporting role-description text must survive normalization/backup and must never be treated as accomplishment or qualification proof. Coaching may use relevant source sentences for more specific prompts while keeping requirement coverage based on resume evidence.
 
 ## Job-link security regression checklist
 
 Only HTTPS is accepted. Embedded credentials, private/local/IP-literal destinations, nonstandard ports, redirects, oversized responses, and unexpected content types must be rejected. Requests must omit credentials and referrer data. Fetched markup must be treated as inert input, not executed or directly injected. LinkedIn and Indeed URLs must remain link-only/paste-fallback sources unless an approved official integration replaces that policy.
 
-## Optimized-draft regression checklist
+## Coaching regression checklist
 
-The personalized optimized draft must never incorporate an unsupported target requirement as a user claim. Hypothetical ideal content must remain visibly labeled reference-only. Missing/partial requirements must remain visible as annotations. Target-language chips must suppress redundant single words when a stronger concept is retained, filter common employment/legal boilerplate, and reject arbitrary sentence fragments created only by neighboring words. Canonical standards/tools/credentials and repeated meaningful standalone technologies must remain discoverable. User-curated concept exclusions and additions must persist through normalization/backups, added concepts must be classified against resume evidence, and Readiness Review and Optimized Draft must use the same curated concept set.
+Coaching must produce a target-specific plan rather than a generic replacement resume. The workspace should show prioritized changes, headline/summary guidance, skill ordering, work-experience relevance, requirement coaching, source-informed prompts, and a final checklist. Requirement states are limited to Covered, Needs detail, and Not shown yet. Supporting job-description context must never move a requirement to Covered by itself. User-curated concept exclusions/additions must remain aligned between Readiness Review and Coaching.
+
+User-facing coaching copy should stay practical and plain-language. Repeated warning language such as “fabricated,” “truthful,” “evidence gap,” or “never auto-filled” should not return to the Coaching UI; one concise accuracy note is sufficient.
 
 ## Resume-output regression checklist
 
