@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.6 — 2026-10-06
+
+Credential requirement matching hotfix.
+
+- Coaching now checks license/certification/registration requirements against the Certifications section before falling back to general phrase matching.
+- Added tolerant matching for profession + jurisdiction + issuing-body wording, so differently ordered credential wording can still match.
+- Credential matching does not require the literal word `license` when the issuing-board context and profession/jurisdiction are already present.
+- Added negative regression coverage so related but different professions do not incorrectly satisfy one another.
+- Coaching cites the matching Certification / license entry as the evidence for a covered credential requirement.
+- No schema change.
+
 ## 0.3.5 — 2026-10-06
 
 Resume headline import fidelity hotfix.

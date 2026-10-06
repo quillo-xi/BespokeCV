@@ -109,3 +109,39 @@ Preferred: risk management experience.
   for (const status of statuses) assert.ok(['covered', 'detail', 'not-shown'].includes(status));
   assert.equal(plan.requirements.some((item) => /fabricat|truthful|dishonest/i.test(item.comment)), false);
 });
+
+
+test('coaching recognizes a state professional license from Certifications even when wording and order differ', () => {
+  const resume = createBlankResume();
+  resume.profile.fullName = 'Alex Morgan';
+  resume.certifications = [
+    'Pharmacy Technician - California State Board of Pharmacy',
+    'License TCH 147938'
+  ];
+  resume.jobDescription = 'Required: California Pharmacy Technician License.';
+
+  const plan = buildCoachingPlan(resume);
+  const requirement = plan.requirements.find((item) => /California Pharmacy Technician License/i.test(item.text));
+
+  assert.ok(requirement);
+  assert.equal(requirement.status, 'covered');
+  assert.ok(requirement.evidence.some((item) =>
+    item.label === 'Certification / license' &&
+    /Pharmacy Technician - California State Board of Pharmacy/i.test(item.text)
+  ));
+});
+
+test('credential matching does not confuse a related occupation with the required licensed profession', () => {
+  const resume = createBlankResume();
+  resume.certifications = [
+    'Pharmacy Technician - California State Board of Pharmacy',
+    'License TCH 147938'
+  ];
+  resume.jobDescription = 'Required: California Pharmacist License.';
+
+  const plan = buildCoachingPlan(resume);
+  const requirement = plan.requirements.find((item) => /California Pharmacist License/i.test(item.text));
+
+  assert.ok(requirement);
+  assert.notEqual(requirement.status, 'covered');
+});
