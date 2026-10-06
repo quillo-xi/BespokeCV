@@ -1,6 +1,6 @@
 # Architecture
 
-BespokeCV is a local-first Progressive Web App hosted from GitHub Pages. The browser remains the primary data boundary: resume files are parsed locally, extracted resume content is stored in local storage, and no BespokeCV application server receives resume content in the 0.2 baseline.
+BespokeCV is a local-first Progressive Web App hosted from GitHub Pages. The browser remains the primary data boundary: resume files are parsed locally, extracted resume content is stored in local storage, and no BespokeCV application server receives resume content in the baseline architecture.
 
 ## Runtime
 
@@ -9,7 +9,7 @@ BespokeCV is a local-first Progressive Web App hosted from GitHub Pages. The bro
 - `site/app.js`: state, import, targeting, and event orchestration.
 - `site/ui/`: focused rendering modules.
 - `site/lib/model.js`: schema, normalization, and plain-text representation.
-- `site/lib/analyzer.js`: transparent local diagnostics and target matching.
+- `site/lib/analyzer.js`: transparent local diagnostics, phrase-aware target matching, boilerplate filtering, and requirement classification.\n- `site/lib/optimizer.js`: local ideal-target blueprint, evidence mapping, relevance ordering, and gap-coaching model.
 - `site/lib/importers.js`: local DOCX/PDF/TXT/backup ingestion and conservative structure mapping.
 - `site/lib/job-source.js`: validated public job-page retrieval and inert text extraction.
 - `site/lib/docx.js`: dependency-free OOXML/DOCX generation.
@@ -27,6 +27,10 @@ Imported document parsing is conservative. BespokeCV stores the extracted source
 Job URLs use a browser-only retrieval boundary. `job-source.js` requires HTTPS, rejects embedded credentials, rejects nonstandard ports, blocks localhost/private-network/IP-literal destinations, rejects redirects, omits credentials and referrer data, imposes a timeout and response-size limit, permits only expected text/HTML/JSON content types, and extracts text from inert DOM or JobPosting JSON-LD.
 
 The app never executes fetched scripts or injects fetched markup. Platforms that prohibit automated scraping, including LinkedIn and Indeed in the current reviewed policy set, are validated as outbound links but are not scraped. Users are directed to paste the posting text instead. Cross-origin protections are never bypassed; a CORS failure becomes a safe paste fallback.
+
+## Optimized-draft boundary
+
+The optimized workspace is entirely local and deterministic. It may reorganize existing bullets by relevance and suggest target terminology only when evidence is found in the loaded resume. The hypothetical ideal blueprint is explicitly labeled reference-only. Requirements without adequate resume evidence remain annotated as gaps or items requiring manual verification; the optimizer must never invent credentials, degrees, years of experience, tools, metrics, or regulated-domain experience.
 
 ## Availability and updates
 

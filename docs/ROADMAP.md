@@ -12,9 +12,11 @@ Document-first resume intake for DOCX/PDF/TXT/backup files, local parsing with s
 
 Multi-page PDF cleanup for repeating page artifacts, wrapped accomplishment bullets, employment duration/location separation, school/program mapping, end-year completion dates, and wrapped skill terms.
 
-## 0.3 — Resume intelligence
+## 0.3 — Resume intelligence — in progress
 
-Stronger required-vs-preferred extraction, date and experience consistency checks, repetition/tense/bullet-quality checks, multiple local resume variants, and accessible section/work-history reordering.
+Completed in 0.3.0: phrase-aware target-language extraction, required/preferred qualification mapping, ideal-target blueprint, evidence-grounded optimized draft, and redline-style gap coaching that does not fabricate qualifications.
+
+Remaining: date and experience consistency checks, repetition/tense/bullet-quality checks, multiple local resume variants, and accessible section/work-history reordering.
 
 ## 0.4 — Import fidelity & assisted tailoring
 

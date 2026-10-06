@@ -26,7 +26,7 @@ Prefer **action + scope/context + evidence/result**. Strong evidence can be perc
 
 Use the employer's terminology when it accurately describes the candidate's experience. Spell out uncommon acronyms on first use. Put important skills in experience context, not only in a keyword list. Address required qualifications explicitly when genuinely met.
 
-Never add hidden text, fabricated keywords, inflated titles, nonexistent tools, invented metrics, or credentials not held.
+Never add hidden text, fabricated keywords, inflated titles, nonexistent tools, invented metrics, or credentials not held. An ideal-target resume may be shown only as an explicitly hypothetical reference. Personalized optimized content must be traceable to existing resume evidence or remain visibly annotated as a gap/recommendation.
 
 ## File format
 

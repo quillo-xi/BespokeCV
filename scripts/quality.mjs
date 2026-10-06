@@ -8,8 +8,8 @@ const required = [
   'README.md', 'SECURITY.md', 'CONTRIBUTING.md', 'CHANGELOG.md',
   'docs/ARCHITECTURE.md', 'docs/QA.md', 'docs/RESUME_STANDARD.md', 'docs/RESEARCH.md', 'docs/ROADMAP.md',
   'site/index.html', 'site/styles.css', 'site/app.js', 'site/sw.js', 'site/manifest.webmanifest', 'site/version.json',
-  'site/lib/model.js', 'site/lib/analyzer.js', 'site/lib/docx.js', 'site/lib/exporters.js', 'site/lib/importers.js', 'site/lib/job-source.js',
-  'site/ui/shared.js', 'site/ui/editor.js', 'site/ui/review.js', 'site/ui/preview.js',
+  'site/lib/model.js', 'site/lib/analyzer.js', 'site/lib/optimizer.js', 'site/lib/docx.js', 'site/lib/exporters.js', 'site/lib/importers.js', 'site/lib/job-source.js',
+  'site/ui/shared.js', 'site/ui/editor.js', 'site/ui/review.js', 'site/ui/optimized.js', 'site/ui/preview.js',
   'site/vendor/pdf.mjs', 'site/vendor/pdf.worker.mjs', 'site/vendor/pdfjs-LICENSE.txt',
   'site/assets/icon.svg', 'site/assets/icon-192.png', 'site/assets/icon-512.png',
   'scripts/vendor-pdf.mjs', '.github/workflows/ci-deploy.yml'
@@ -40,8 +40,8 @@ const sw = fs.readFileSync(path.join(root, 'site/sw.js'), 'utf8');
 if (!sw.includes(`bespokecv-v${version}`)) failures.push('Service-worker cache version does not match release version.');
 
 const jsFiles = [
-  'site/app.js','site/sw.js','site/lib/model.js','site/lib/analyzer.js','site/lib/docx.js','site/lib/exporters.js','site/lib/importers.js','site/lib/job-source.js',
-  'site/ui/shared.js','site/ui/editor.js','site/ui/review.js','site/ui/preview.js','scripts/vendor-pdf.mjs'
+  'site/app.js','site/sw.js','site/lib/model.js','site/lib/analyzer.js','site/lib/optimizer.js','site/lib/docx.js','site/lib/exporters.js','site/lib/importers.js','site/lib/job-source.js',
+  'site/ui/shared.js','site/ui/editor.js','site/ui/review.js','site/ui/optimized.js','site/ui/preview.js','scripts/vendor-pdf.mjs'
 ];
 for (const file of jsFiles) {
   try { execFileSync(process.execPath, ['--check', path.join(root, file)], { stdio: 'pipe' }); }
@@ -63,11 +63,11 @@ for (const file of ['site/vendor/pdf.mjs', 'site/vendor/pdf.worker.mjs']) {
 }
 
 const publicFiles = [
-  'site/index.html','site/styles.css','site/app.js','site/sw.js','site/lib/model.js','site/lib/analyzer.js','site/lib/docx.js','site/lib/exporters.js',
-  'site/lib/importers.js','site/lib/job-source.js','site/ui/shared.js','site/ui/editor.js','site/ui/review.js','site/ui/preview.js'
+  'site/index.html','site/styles.css','site/app.js','site/sw.js','site/lib/model.js','site/lib/analyzer.js','site/lib/optimizer.js','site/lib/docx.js','site/lib/exporters.js',
+  'site/lib/importers.js','site/lib/job-source.js','site/ui/shared.js','site/ui/editor.js','site/ui/review.js','site/ui/optimized.js','site/ui/preview.js'
 ];
 const publicBytes = publicFiles.reduce((sum, file) => sum + fs.statSync(path.join(root, file)).size, 0);
-if (publicBytes > 330_000) failures.push(`Core app exceeded 330 KB source budget (${publicBytes} bytes, excluding reviewed PDF.js vendor assets).`);
+if (publicBytes > 390_000) failures.push(`Core app exceeded 390 KB source budget (${publicBytes} bytes, excluding reviewed PDF.js vendor assets).`);
 
 if (failures.length) {
   console.error(`Quality gate failed with ${failures.length} issue(s):\n- ${failures.join('\n- ')}`);

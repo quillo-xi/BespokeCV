@@ -4,12 +4,14 @@ import { importResumeFile, parseResumeText } from './lib/importers.js';
 import { fetchJobPosting } from './lib/job-source.js';
 import { renderResumeEditor } from './ui/editor.js';
 import { renderTargetPanel, renderReviewPanel } from './ui/review.js';
+import { renderOptimizedPanel } from './ui/optimized.js';
 import { renderPreview } from './ui/preview.js';
 
 const STORAGE_KEY = 'bespokecv.resume.v1';
 const $ = (selector) => document.querySelector(selector);
 const resumePanel = $('#resumePanel');
 const targetPanel = $('#targetPanel');
+const optimizedPanel = $('#optimizedPanel');
 const reviewPanel = $('#reviewPanel');
 const preview = $('#resumePreview');
 const saveStatus = $('#saveStatus');
@@ -47,6 +49,7 @@ function setByPath(path, value) {
 function renderAll({ editor = true } = {}) {
   if (editor) renderResumeEditor(resume, resumePanel);
   renderTargetPanel(resume, targetPanel);
+  renderOptimizedPanel(resume, optimizedPanel);
   renderReviewPanel(resume, reviewPanel);
   renderPreview(resume, preview);
 }
@@ -60,6 +63,7 @@ function handleInput(event) {
   else setByPath(path, el.type === 'checkbox' ? el.checked : el.value);
   scheduleSave();
   renderPreview(resume, preview);
+  renderOptimizedPanel(resume, optimizedPanel);
   renderReviewPanel(resume, reviewPanel);
 }
 
@@ -126,7 +130,9 @@ function switchMode(mode) {
   }
   resumePanel.hidden = mode !== 'resume';
   targetPanel.hidden = mode !== 'target';
+  optimizedPanel.hidden = mode !== 'optimized';
   reviewPanel.hidden = mode !== 'review';
+  document.body.classList.toggle('optimized-mode', mode === 'optimized');
 }
 
 function showToast(message) {
